@@ -17,6 +17,7 @@ class Mouser extends StatelessWidget {
         useMaterial3: true,
         colorScheme: ColorScheme.fromSeed(
           seedColor: const Color(0xFF2196F3),
+          primary: const Color(0xFF2196F3),
           brightness: Brightness.light,
         ),
         fontFamily: 'SF Pro Display',

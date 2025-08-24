@@ -190,56 +190,63 @@ class _OnboardingScreenState extends State<OnboardingScreen>
 
                       SizedBox(height: 40),
 
-                      // Mouse illustration
+                      // Animation GIFs illustration
                       FadeTransition(
                         opacity: _fadeAnimation,
-                        child: Container(
-                          height: 200,
-                          child: Stack(
-                            alignment: Alignment.center,
-                            children: [
-                              // Background decoration
-                              Container(
-                                width: 300,
-                                height: 200,
-                                decoration: BoxDecoration(
-                                  gradient: RadialGradient(
-                                    colors: [
-                                      theme.colorScheme.primary.withOpacity(
-                                        0.1,
-                                      ),
-                                      Colors.transparent,
-                                    ],
-                                  ),
-                                  borderRadius: BorderRadius.circular(150),
+                        child: SizedBox(
+                          height: 220,
+                          child: Container(
+                            padding: EdgeInsets.all(20),
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: [
+                                  theme.colorScheme.primary.withOpacity(0.1),
+                                  theme.colorScheme.secondary.withOpacity(0.05),
+                                ],
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                              ),
+                              borderRadius: BorderRadius.circular(24),
+                              border: Border.all(
+                                color: theme.colorScheme.primary.withOpacity(
+                                  0.2,
                                 ),
+                                width: 1,
                               ),
-                              // Mouse image
-                              Image.asset(
-                                'assets/mouse.png',
-                                width: 180,
-                                height: 180,
-                                errorBuilder: (context, error, stackTrace) {
-                                  return Container(
-                                    width: 120,
-                                    height: 80,
-                                    decoration: BoxDecoration(
-                                      color: theme.colorScheme.surfaceVariant,
-                                      borderRadius: BorderRadius.circular(60),
-                                      border: Border.all(
-                                        color: theme.colorScheme.outline
-                                            .withOpacity(0.3),
-                                      ),
-                                    ),
-                                    child: Icon(
-                                      Icons.mouse,
-                                      size: 40,
-                                      color: theme.colorScheme.primary,
-                                    ),
-                                  );
-                                },
-                              ),
-                            ],
+                              boxShadow: [
+                                BoxShadow(
+                                  color: theme.colorScheme.primary.withOpacity(
+                                    0.1,
+                                  ),
+                                  blurRadius: 20,
+                                  offset: Offset(0, 10),
+                                ),
+                              ],
+                            ),
+                            child: Row(
+                              children: [
+                                _buildAnimationGif(
+                                  theme,
+                                  'assets/interface.gif',
+                                  Icons.phone_android,
+                                  'Interface',
+                                ),
+                                SizedBox(width: 16),
+                                _buildAnimationGif(
+                                  theme,
+                                  'assets/mouse.gif',
+                                  Icons.mouse,
+                                  'Mouse Control',
+                                ),
+                                SizedBox(width: 16),
+                                _buildAnimationGif(
+                                  theme,
+                                  'assets/wifi.gif',
+                                  Icons.wifi,
+                                  'Wireless',
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                       ),
@@ -318,6 +325,66 @@ class _OnboardingScreenState extends State<OnboardingScreen>
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildAnimationGif(
+    ThemeData theme,
+    String gifPath,
+    IconData fallbackIcon,
+    String label,
+  ) {
+    return Expanded(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            height: 100,
+            width: double.infinity,
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.7),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: theme.colorScheme.primary.withOpacity(0.3),
+                width: 1,
+              ),
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(15),
+              child: Image.asset(
+                gifPath,
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) {
+                  return Container(
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.primary.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(15),
+                    ),
+                    child: Center(
+                      child: Icon(
+                        fallbackIcon,
+                        size: 40,
+                        color: theme.colorScheme.primary,
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ),
+          SizedBox(height: 12),
+          Text(
+            label,
+            style: theme.textTheme.bodySmall?.copyWith(
+              fontWeight: FontWeight.w600,
+              color: theme.colorScheme.onSurface.withOpacity(0.8),
+            ),
+            textAlign: TextAlign.center,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ],
       ),
     );
   }
