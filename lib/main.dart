@@ -133,167 +133,229 @@ class _MouserScreenState extends State<MouserScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      // Fix keyboard overflow by making the body scrollable
+      resizeToAvoidBottomInset: true,
       appBar: AppBar(
         title: Text('PC Mouse Controller'),
         foregroundColor: Colors.white,
         backgroundColor: isConnected ? Colors.blue : Colors.red,
       ),
-      body: Column(
-        children: [
-          // Connection Panel
-          Container(
-            padding: EdgeInsets.all(16),
-            margin: EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              border: Border.all(color: Colors.grey),
-              borderRadius: BorderRadius.circular(8),
-            ),
+      body: SingleChildScrollView(
+        // This prevents keyboard overflow
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            minHeight:
+                MediaQuery.of(context).size.height -
+                AppBar().preferredSize.height -
+                MediaQuery.of(context).padding.top,
+          ),
+          child: IntrinsicHeight(
             child: Column(
               children: [
-                TextField(
-                  controller: _ipController,
-                  decoration: InputDecoration(
-                    labelText: 'PC IP Address',
-                    hintText: '192.168.1.100',
+                // Connection Panel
+                Container(
+                  padding: EdgeInsets.all(16),
+                  margin: EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    border: Border.all(color: Colors.grey),
+                    borderRadius: BorderRadius.circular(8),
                   ),
-                  onChanged: (value) {
-                    serverIP = value;
-                  },
-                ),
-                SizedBox(height: 8),
-                ElevatedButton(
-                  onPressed: testConnection,
-                  child: Text(isConnected ? 'Reconnect' : 'Connect'),
-                ),
-                Text(
-                  isConnected ? 'Connected' : 'Disconnected',
-                  style: TextStyle(
-                    color: isConnected ? Colors.green : Colors.red,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          // Sensitivity Control
-          Container(
-            padding: EdgeInsets.symmetric(horizontal: 16),
-            child: Row(
-              children: [
-                Text('Sensitivity:'),
-                Expanded(
-                  child: Slider(
-                    value: sensitivity,
-                    min: 0.1,
-                    max: 3.0,
-                    divisions: 29,
-                    label: sensitivity.toStringAsFixed(1),
-                    onChanged: (value) {
-                      setState(() {
-                        sensitivity = value;
-                      });
-                    },
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          // Touchpad Area
-          Expanded(
-            child: Container(
-              margin: EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                border: Border.all(color: Colors.blue, width: 2),
-                borderRadius: BorderRadius.circular(8),
-                color: Colors.grey.shade100,
-              ),
-              child: GestureDetector(
-                onPanUpdate: (details) {
-                  if (isConnected) {
-                    sendMouseCommand(
-                      'move',
-                      data: {
-                        'dx': details.delta.dx * sensitivity,
-                        'dy': details.delta.dy * sensitivity,
-                      },
-                    );
-                  }
-                },
-                onTap: () {
-                  if (isConnected) {
-                    sendMouseCommand('left_click');
-                  }
-                },
-                child: SizedBox(
-                  width: double.infinity,
-                  child: Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.touch_app,
-                          size: 64,
-                          color: Colors.blue.shade300,
+                  child: Column(
+                    children: [
+                      TextField(
+                        controller: _ipController,
+                        decoration: InputDecoration(
+                          labelText: 'PC IP Address',
+                          hintText: '192.168.1.100',
                         ),
-                        SizedBox(height: 16),
-                        Text(
-                          'Touchpad',
-                          style: TextStyle(
-                            fontSize: 24,
-                            color: Colors.blue.shade600,
-                            fontWeight: FontWeight.bold,
+                        onChanged: (value) {
+                          serverIP = value;
+                        },
+                      ),
+                      SizedBox(height: 8),
+                      ElevatedButton(
+                        onPressed: testConnection,
+                        child: Text(isConnected ? 'Reconnect' : 'Connect'),
+                      ),
+                      Text(
+                        isConnected ? 'Connected' : 'Disconnected',
+                        style: TextStyle(
+                          color: isConnected ? Colors.green : Colors.red,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                // Sensitivity Control
+                Container(
+                  padding: EdgeInsets.symmetric(horizontal: 16),
+                  child: Row(
+                    children: [
+                      Text('Sensitivity:'),
+                      Expanded(
+                        child: Slider(
+                          value: sensitivity,
+                          min: 0.1,
+                          max: 3.0,
+                          divisions: 29,
+                          label: sensitivity.toStringAsFixed(1),
+                          onChanged: (value) {
+                            setState(() {
+                              sensitivity = value;
+                            });
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                // Touchpad Area
+                Expanded(
+                  child: Container(
+                    margin: EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.blue, width: 2),
+                      borderRadius: BorderRadius.circular(8),
+                      color: Colors.grey.shade100,
+                    ),
+                    child: GestureDetector(
+                      onPanUpdate: (details) {
+                        if (isConnected) {
+                          sendMouseCommand(
+                            'move',
+                            data: {
+                              'dx': details.delta.dx * sensitivity,
+                              'dy': details.delta.dy * sensitivity,
+                            },
+                          );
+                        }
+                      },
+                      onTap: () {
+                        if (isConnected) {
+                          sendMouseCommand('left_click');
+                        }
+                      },
+                      child: SizedBox(
+                        width: double.infinity,
+                        child: Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.touch_app,
+                                size: 64,
+                                color: Colors.blue.shade300,
+                              ),
+                              SizedBox(height: 16),
+                              Text(
+                                'Touchpad',
+                                style: TextStyle(
+                                  fontSize: 24,
+                                  color: Colors.blue.shade600,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              SizedBox(height: 8),
+                              Text(
+                                'Move: Drag to move cursor\nTap: Left click',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(color: Colors.grey.shade600),
+                              ),
+                            ],
                           ),
                         ),
-                        SizedBox(height: 8),
-                        Text(
-                          'Move: Drag to move cursor\nTap: Left click',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(color: Colors.grey.shade600),
-                        ),
-                      ],
+                      ),
                     ),
                   ),
                 ),
-              ),
-            ),
-          ),
 
-          // Button Controls
-          Container(
-            padding: EdgeInsets.all(8),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                ElevatedButton(
-                  onPressed: isConnected
-                      ? () => sendMouseCommand('left_click')
-                      : null,
-                  child: Text('Left Click'),
+                // Button Controls - Fixed overflow with flexible layout
+                Container(
+                  padding: EdgeInsets.all(8),
+                  child: Column(
+                    children: [
+                      // First row of buttons
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Padding(
+                              padding: EdgeInsets.symmetric(horizontal: 2),
+                              child: ElevatedButton(
+                                onPressed: isConnected
+                                    ? () => sendMouseCommand('left_click')
+                                    : null,
+                                child: FittedBox(
+                                  fit: BoxFit.scaleDown,
+                                  child: Text('Left Click'),
+                                ),
+                              ),
+                            ),
+                          ),
+                          Expanded(
+                            child: Padding(
+                              padding: EdgeInsets.symmetric(horizontal: 2),
+                              child: ElevatedButton(
+                                onPressed: isConnected
+                                    ? () => sendMouseCommand('right_click')
+                                    : null,
+                                child: FittedBox(
+                                  fit: BoxFit.scaleDown,
+                                  child: Text('Right Click'),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      SizedBox(height: 8),
+                      // Second row of buttons
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Padding(
+                              padding: EdgeInsets.symmetric(horizontal: 2),
+                              child: ElevatedButton(
+                                onPressed: isConnected
+                                    ? () => sendMouseCommand('scroll_up')
+                                    : null,
+                                child: FittedBox(
+                                  fit: BoxFit.scaleDown,
+                                  child: Text('Scroll Up'),
+                                ),
+                              ),
+                            ),
+                          ),
+                          Expanded(
+                            child: Padding(
+                              padding: EdgeInsets.symmetric(horizontal: 2),
+                              child: ElevatedButton(
+                                onPressed: isConnected
+                                    ? () => sendMouseCommand('scroll_down')
+                                    : null,
+                                child: FittedBox(
+                                  fit: BoxFit.scaleDown,
+                                  child: Text('Scroll Down'),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
-                ElevatedButton(
-                  onPressed: isConnected
-                      ? () => sendMouseCommand('right_click')
-                      : null,
-                  child: Text('Right Click'),
-                ),
-                ElevatedButton(
-                  onPressed: isConnected
-                      ? () => sendMouseCommand('scroll_up')
-                      : null,
-                  child: Text('Scroll Up'),
-                ),
-                ElevatedButton(
-                  onPressed: isConnected
-                      ? () => sendMouseCommand('scroll_down')
-                      : null,
-                  child: Text('Scroll Down'),
+
+                // Add some bottom padding to ensure buttons are visible above keyboard
+                SizedBox(
+                  height: MediaQuery.of(context).viewInsets.bottom > 0 ? 8 : 0,
                 ),
               ],
             ),
           ),
-        ],
+        ),
       ),
     );
   }
