@@ -33,7 +33,7 @@ end
 # Unset irrelevant variables.
 deactivate nondestructive
 
-set -gx VIRTUAL_ENV /home/at4/Documents/flutter-projects/mouse-controller/mouse_env
+set -gx VIRTUAL_ENV /home/at4/Documents/flutter-projects/mouser/server-side/mouse_env
 
 set -gx _OLD_VIRTUAL_PATH $PATH
 set -gx PATH "$VIRTUAL_ENV/"bin $PATH
