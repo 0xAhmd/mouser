@@ -99,12 +99,10 @@ class _MouserScreenState extends State<MouserScreen>
 
     try {
       final client = http.Client();
-      final response = await client
-          .get(
-            Uri.parse('http://$serverIP:$serverPort/ping'),
-            headers: {'Accept': 'application/json', 'Connection': 'close'},
-          )
-          .timeout(const Duration(seconds: 5));
+      final response = await client.get(
+        Uri.parse('http://$serverIP:$serverPort/ping'),
+        headers: {'Accept': 'application/json', 'Connection': 'close'},
+      ).timeout(const Duration(seconds: 5));
 
       client.close();
 
@@ -124,12 +122,22 @@ class _MouserScreenState extends State<MouserScreen>
       });
       _connectionController.reverse();
       HapticFeedback.heavyImpact();
-      _showSnackBar('Connection failed', Colors.red);
+      _showSnackBar('Connection failed: $e', Colors.red);
+      debugPrint(e.toString());
     } finally {
       setState(() {
         isConnecting = false;
       });
     }
+  }
+
+  void disconnect() {
+    setState(() {
+      isConnected = false;
+    });
+    _connectionController.reverse();
+    HapticFeedback.lightImpact();
+    _showSnackBar('Disconnected', Colors.orange);
   }
 
   void _showSnackBar(String message, Color color) {
@@ -199,11 +207,10 @@ class _MouserScreenState extends State<MouserScreen>
             ),
             boxShadow: [
               BoxShadow(
-                color:
-                    (isConnected
-                            ? theme.colorScheme.primary
-                            : theme.colorScheme.error)
-                        .withOpacity(0.3),
+                color: (isConnected
+                        ? theme.colorScheme.primary
+                        : theme.colorScheme.error)
+                    .withOpacity(0.3),
                 blurRadius: 20,
                 offset: const Offset(0, 10),
               ),
@@ -226,7 +233,8 @@ class _MouserScreenState extends State<MouserScreen>
                         width: 2,
                       ),
                     ),
-                    child: const Icon(Icons.computer, color: Colors.white, size: 32),
+                    child: const Icon(Icons.computer,
+                        color: Colors.white, size: 32),
                   );
                 },
               ),
@@ -295,6 +303,39 @@ class _MouserScreenState extends State<MouserScreen>
               icon: isConnected ? Icons.refresh : Icons.link,
             ),
           ),
+          // Add disconnect button when connected
+          if (isConnected) ...[
+            const SizedBox(height: 12),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: disconnect,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: theme.colorScheme.error,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  elevation: 0,
+                ),
+                child: const Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.link_off),
+                    SizedBox(width: 8),
+                    Text(
+                      'Disconnect',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 16,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
         ],
       ),
     );
@@ -317,7 +358,8 @@ class _MouserScreenState extends State<MouserScreen>
               ),
               const Spacer(),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
                   color: theme.colorScheme.primary.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(20),
@@ -415,9 +457,8 @@ class _MouserScreenState extends State<MouserScreen>
                 child: ControlButton(
                   icon: Icons.mouse,
                   label: 'Left Click',
-                  onPressed: isConnected
-                      ? () => sendMouseCommand('left_click')
-                      : null,
+                  onPressed:
+                      isConnected ? () => sendMouseCommand('left_click') : null,
                   color: theme.colorScheme.primary,
                 ),
               ),
@@ -441,9 +482,8 @@ class _MouserScreenState extends State<MouserScreen>
                 child: ControlButton(
                   icon: Icons.keyboard_arrow_up,
                   label: 'Scroll Up',
-                  onPressed: isConnected
-                      ? () => sendMouseCommand('scroll_up')
-                      : null,
+                  onPressed:
+                      isConnected ? () => sendMouseCommand('scroll_up') : null,
                   color: theme.colorScheme.tertiary,
                 ),
               ),

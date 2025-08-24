@@ -27,8 +27,19 @@ flutter:
     - assets/
 
 flutter_native_splash:
-  color: "#2196F3"
+  color: "#ffffff"
   image: assets/logo.png
+  # Add these properties to prevent trimming
+  image_dark: assets/logo.png
+  color_dark: "#ffffff"
+  fullscreen: true
+  # This prevents the circular trimming
+  android_gravity: center
+  ios_content_mode: center
+  # Ensure the image is not scaled or trimmed
   android_12:
     image: assets/logo.png
-    color: "#2196F3"
+    color: "#ffffff"
+    # Keep the image intact without circular masking
+    image_dark: assets/logo.png
+    color_dark: "#ffffff"
