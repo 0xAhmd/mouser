@@ -26,7 +26,7 @@ class TouchpadArea extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Container(
-              padding: EdgeInsets.all(20),
+              padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
                 color: theme.colorScheme.primary.withOpacity(0.1),
                 shape: BoxShape.circle,
@@ -37,7 +37,7 @@ class TouchpadArea extends StatelessWidget {
                 color: theme.colorScheme.primary,
               ),
             ),
-            SizedBox(height: 20),
+            const SizedBox(height: 20),
             Text(
               'Touchpad',
               style: theme.textTheme.headlineSmall?.copyWith(
@@ -45,7 +45,7 @@ class TouchpadArea extends StatelessWidget {
                 color: theme.colorScheme.primary,
               ),
             ),
-            SizedBox(height: 8),
+            const SizedBox(height: 8),
             Text(
               'Drag to move • Tap to click',
               style: theme.textTheme.bodyMedium?.copyWith(

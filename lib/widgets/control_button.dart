@@ -28,7 +28,7 @@ class _ControlButtonState extends State<ControlButton>
   void initState() {
     super.initState();
     _controller = AnimationController(
-      duration: Duration(milliseconds: 100),
+      duration: const Duration(milliseconds: 100),
       vsync: this,
     );
     _scaleAnimation = Tween<double>(
@@ -57,7 +57,7 @@ class _ControlButtonState extends State<ControlButton>
                 BoxShadow(
                   color: widget.color.withOpacity(0.2),
                   blurRadius: 8,
-                  offset: Offset(0, 4),
+                  offset: const Offset(0, 4),
                 ),
               ],
             ),
@@ -72,7 +72,7 @@ class _ControlButtonState extends State<ControlButton>
               style: ElevatedButton.styleFrom(
                 backgroundColor: widget.color,
                 foregroundColor: Colors.white,
-                padding: EdgeInsets.symmetric(vertical: 16),
+                padding: const EdgeInsets.symmetric(vertical: 16),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(16),
                 ),
@@ -82,10 +82,10 @@ class _ControlButtonState extends State<ControlButton>
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Icon(widget.icon, size: 24),
-                  SizedBox(height: 4),
+                  const SizedBox(height: 4),
                   Text(
                     widget.label,
-                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+                    style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
                   ),
                 ],
               ),

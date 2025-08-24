@@ -27,7 +27,7 @@ class _AnimatedButtonState extends State<AnimatedButton>
   void initState() {
     super.initState();
     _controller = AnimationController(
-      duration: Duration(milliseconds: 150),
+      duration: const Duration(milliseconds: 150),
       vsync: this,
     );
     _scaleAnimation = Tween<double>(
@@ -61,14 +61,14 @@ class _AnimatedButtonState extends State<AnimatedButton>
             style: ElevatedButton.styleFrom(
               backgroundColor: theme.colorScheme.primary,
               foregroundColor: Colors.white,
-              padding: EdgeInsets.symmetric(vertical: 16),
+              padding: const EdgeInsets.symmetric(vertical: 16),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(16),
               ),
               elevation: 0,
             ),
             child: widget.isLoading
-                ? SizedBox(
+                ? const SizedBox(
                     height: 20,
                     width: 20,
                     child: CircularProgressIndicator(
@@ -80,10 +80,10 @@ class _AnimatedButtonState extends State<AnimatedButton>
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Icon(widget.icon),
-                      SizedBox(width: 8),
+                      const SizedBox(width: 8),
                       Text(
                         widget.text,
-                        style: TextStyle(
+                        style: const TextStyle(
                           fontWeight: FontWeight.w600,
                           fontSize: 16,
                         ),

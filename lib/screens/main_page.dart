@@ -34,11 +34,11 @@ class _MouserScreenState extends State<MouserScreen>
     super.initState();
     _ipController.text = serverIP;
     _pulseController = AnimationController(
-      duration: Duration(seconds: 2),
+      duration: const Duration(seconds: 2),
       vsync: this,
     )..repeat(reverse: true);
     _connectionController = AnimationController(
-      duration: Duration(milliseconds: 300),
+      duration: const Duration(milliseconds: 300),
       vsync: this,
     );
   }
@@ -68,7 +68,7 @@ class _MouserScreenState extends State<MouserScreen>
             },
             body: json.encode({'action': action, 'data': data ?? {}}),
           )
-          .timeout(Duration(milliseconds: 500));
+          .timeout(const Duration(milliseconds: 500));
 
       client.close();
 
@@ -104,7 +104,7 @@ class _MouserScreenState extends State<MouserScreen>
             Uri.parse('http://$serverIP:$serverPort/ping'),
             headers: {'Accept': 'application/json', 'Connection': 'close'},
           )
-          .timeout(Duration(seconds: 5));
+          .timeout(const Duration(seconds: 5));
 
       client.close();
 
@@ -139,7 +139,7 @@ class _MouserScreenState extends State<MouserScreen>
         backgroundColor: color,
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        margin: EdgeInsets.all(16),
+        margin: const EdgeInsets.all(16),
       ),
     );
   }
@@ -156,18 +156,18 @@ class _MouserScreenState extends State<MouserScreen>
             _buildHeader(theme),
             Expanded(
               child: SingleChildScrollView(
-                padding: EdgeInsets.symmetric(horizontal: 20),
+                padding: const EdgeInsets.symmetric(horizontal: 20),
                 child: Column(
                   children: [
-                    SizedBox(height: 20),
+                    const SizedBox(height: 20),
                     _buildConnectionCard(theme),
-                    SizedBox(height: 20),
+                    const SizedBox(height: 20),
                     _buildSensitivityCard(theme),
-                    SizedBox(height: 20),
+                    const SizedBox(height: 20),
                     _buildTouchpadCard(theme),
-                    SizedBox(height: 20),
+                    const SizedBox(height: 20),
                     _buildControlButtons(theme),
-                    SizedBox(height: 40),
+                    const SizedBox(height: 40),
                   ],
                 ),
               ),
@@ -183,7 +183,7 @@ class _MouserScreenState extends State<MouserScreen>
       animation: _connectionController,
       builder: (context, child) {
         return Container(
-          padding: EdgeInsets.all(20),
+          padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
             gradient: LinearGradient(
               colors: [
@@ -205,7 +205,7 @@ class _MouserScreenState extends State<MouserScreen>
                             : theme.colorScheme.error)
                         .withOpacity(0.3),
                 blurRadius: 20,
-                offset: Offset(0, 10),
+                offset: const Offset(0, 10),
               ),
             ],
           ),
@@ -215,7 +215,7 @@ class _MouserScreenState extends State<MouserScreen>
                 animation: _pulseController,
                 builder: (context, child) {
                   return Container(
-                    padding: EdgeInsets.all(12),
+                    padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
                       color: Colors.white.withOpacity(0.2),
                       borderRadius: BorderRadius.circular(16),
@@ -226,11 +226,11 @@ class _MouserScreenState extends State<MouserScreen>
                         width: 2,
                       ),
                     ),
-                    child: Icon(Icons.computer, color: Colors.white, size: 32),
+                    child: const Icon(Icons.computer, color: Colors.white, size: 32),
                   );
                 },
               ),
-              SizedBox(width: 16),
+              const SizedBox(width: 16),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -242,9 +242,9 @@ class _MouserScreenState extends State<MouserScreen>
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                    SizedBox(height: 4),
+                    const SizedBox(height: 4),
                     AnimatedSwitcher(
-                      duration: Duration(milliseconds: 300),
+                      duration: const Duration(milliseconds: 300),
                       child: Text(
                         key: ValueKey(isConnected),
                         isConnected
@@ -277,7 +277,7 @@ class _MouserScreenState extends State<MouserScreen>
               fontWeight: FontWeight.bold,
             ),
           ),
-          SizedBox(height: 16),
+          const SizedBox(height: 16),
           CustomTextField(
             controller: _ipController,
             label: 'PC IP Address',
@@ -285,7 +285,7 @@ class _MouserScreenState extends State<MouserScreen>
             prefixIcon: Icons.router,
             onChanged: (value) => serverIP = value,
           ),
-          SizedBox(height: 16),
+          const SizedBox(height: 16),
           SizedBox(
             width: double.infinity,
             child: AnimatedButton(
@@ -308,16 +308,16 @@ class _MouserScreenState extends State<MouserScreen>
           Row(
             children: [
               Icon(Icons.tune, color: theme.colorScheme.primary),
-              SizedBox(width: 8),
+              const SizedBox(width: 8),
               Text(
                 'Sensitivity',
                 style: theme.textTheme.titleMedium?.copyWith(
                   fontWeight: FontWeight.w600,
                 ),
               ),
-              Spacer(),
+              const Spacer(),
               Container(
-                padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
                   color: theme.colorScheme.primary.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(20),
@@ -332,12 +332,12 @@ class _MouserScreenState extends State<MouserScreen>
               ),
             ],
           ),
-          SizedBox(height: 12),
+          const SizedBox(height: 12),
           SliderTheme(
             data: SliderTheme.of(context).copyWith(
               trackHeight: 6,
-              thumbShape: RoundSliderThumbShape(enabledThumbRadius: 12),
-              overlayShape: RoundSliderOverlayShape(overlayRadius: 20),
+              thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 12),
+              overlayShape: const RoundSliderOverlayShape(overlayRadius: 20),
             ),
             child: Slider(
               value: sensitivity,
@@ -359,7 +359,7 @@ class _MouserScreenState extends State<MouserScreen>
 
   Widget _buildTouchpadCard(ThemeData theme) {
     return GlassCard(
-      padding: EdgeInsets.all(0),
+      padding: const EdgeInsets.all(0),
       child: Container(
         height: 300,
         decoration: BoxDecoration(
@@ -408,7 +408,7 @@ class _MouserScreenState extends State<MouserScreen>
               fontWeight: FontWeight.bold,
             ),
           ),
-          SizedBox(height: 16),
+          const SizedBox(height: 16),
           Row(
             children: [
               Expanded(
@@ -421,7 +421,7 @@ class _MouserScreenState extends State<MouserScreen>
                   color: theme.colorScheme.primary,
                 ),
               ),
-              SizedBox(width: 12),
+              const SizedBox(width: 12),
               Expanded(
                 child: ControlButton(
                   icon: Icons.menu,
@@ -434,7 +434,7 @@ class _MouserScreenState extends State<MouserScreen>
               ),
             ],
           ),
-          SizedBox(height: 12),
+          const SizedBox(height: 12),
           Row(
             children: [
               Expanded(
@@ -447,7 +447,7 @@ class _MouserScreenState extends State<MouserScreen>
                   color: theme.colorScheme.tertiary,
                 ),
               ),
-              SizedBox(width: 12),
+              const SizedBox(width: 12),
               Expanded(
                 child: ControlButton(
                   icon: Icons.keyboard_arrow_down,

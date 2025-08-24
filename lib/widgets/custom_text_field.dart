@@ -33,7 +33,8 @@ class CustomTextField extends StatelessWidget {
         ),
         filled: true,
         fillColor: theme.colorScheme.surfaceVariant.withOpacity(0.3),
-        contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       ),
     );
   }

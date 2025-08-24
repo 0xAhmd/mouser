@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:mouser/screens/main_page.dart';
 
 class OnboardingScreen extends StatefulWidget {
@@ -23,17 +24,17 @@ class _OnboardingScreenState extends State<OnboardingScreen>
     super.initState();
 
     _fadeController = AnimationController(
-      duration: Duration(milliseconds: 1500),
+      duration: const Duration(milliseconds: 1500),
       vsync: this,
     );
 
     _slideController = AnimationController(
-      duration: Duration(milliseconds: 1200),
+      duration: const Duration(milliseconds: 1200),
       vsync: this,
     );
 
     _scaleController = AnimationController(
-      duration: Duration(milliseconds: 1000),
+      duration: const Duration(milliseconds: 1000),
       vsync: this,
     );
 
@@ -42,7 +43,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
       end: 1.0,
     ).animate(CurvedAnimation(parent: _fadeController, curve: Curves.easeOut));
 
-    _slideAnimation = Tween<Offset>(begin: Offset(0, 0.3), end: Offset.zero)
+    _slideAnimation = Tween<Offset>(begin: const Offset(0, 0.3), end: Offset.zero)
         .animate(
           CurvedAnimation(parent: _slideController, curve: Curves.easeOutBack),
         );
@@ -55,11 +56,11 @@ class _OnboardingScreenState extends State<OnboardingScreen>
   }
 
   void _startAnimations() async {
-    await Future.delayed(Duration(milliseconds: 300));
+    await Future.delayed(const Duration(milliseconds: 300));
     _scaleController.forward();
-    await Future.delayed(Duration(milliseconds: 200));
+    await Future.delayed(const Duration(milliseconds: 200));
     _slideController.forward();
-    await Future.delayed(Duration(milliseconds: 300));
+    await Future.delayed(const Duration(milliseconds: 300));
     _fadeController.forward();
   }
 
@@ -71,25 +72,39 @@ class _OnboardingScreenState extends State<OnboardingScreen>
     super.dispose();
   }
 
-  void _navigateToMainApp() {
-    Navigator.of(context).pushReplacement(
-      PageRouteBuilder(
-        pageBuilder: (context, animation, secondaryAnimation) => MouserScreen(),
-        transitionDuration: Duration(milliseconds: 600),
-        transitionsBuilder: (context, animation, secondaryAnimation, child) {
-          return FadeTransition(
-            opacity: animation,
-            child: SlideTransition(
-              position: Tween<Offset>(begin: Offset(1.0, 0.0), end: Offset.zero)
-                  .animate(
-                    CurvedAnimation(parent: animation, curve: Curves.easeInOut),
-                  ),
-              child: child,
-            ),
-          );
-        },
-      ),
-    );
+  Future<void> _navigateToMainApp() async {
+    // Mark onboarding as completed
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('onboarding_completed', true);
+
+    // Navigate to main app
+    if (mounted) {
+      Navigator.of(context).pushReplacement(
+        PageRouteBuilder(
+          pageBuilder: (context, animation, secondaryAnimation) =>
+              const MouserScreen(),
+          transitionDuration: const Duration(milliseconds: 600),
+          transitionsBuilder: (context, animation, secondaryAnimation, child) {
+            return FadeTransition(
+              opacity: animation,
+              child: SlideTransition(
+                position:
+                    Tween<Offset>(
+                      begin: const Offset(1.0, 0.0),
+                      end: Offset.zero,
+                    ).animate(
+                      CurvedAnimation(
+                        parent: animation,
+                        curve: Curves.easeInOut,
+                      ),
+                    ),
+                child: child,
+              ),
+            );
+          },
+        ),
+      );
+    }
   }
 
   @override
@@ -111,7 +126,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
         ),
         child: SafeArea(
           child: Padding(
-            padding: EdgeInsets.symmetric(horizontal: 32),
+            padding: const EdgeInsets.symmetric(horizontal: 32),
             child: Column(
               children: [
                 Expanded(
@@ -126,7 +141,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                           return Transform.scale(
                             scale: _scaleAnimation.value,
                             child: Container(
-                              padding: EdgeInsets.all(24),
+                              padding: const EdgeInsets.all(24),
                               decoration: BoxDecoration(
                                 color: Colors.white,
                                 borderRadius: BorderRadius.circular(32),
@@ -135,7 +150,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                                     color: theme.colorScheme.primary
                                         .withOpacity(0.2),
                                     blurRadius: 32,
-                                    offset: Offset(0, 16),
+                                    offset: const Offset(0, 16),
                                   ),
                                 ],
                               ),
@@ -156,7 +171,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                         },
                       ),
 
-                      SizedBox(height: 40),
+                      const SizedBox(height: 40),
 
                       // Title with slide animation
                       SlideTransition(
@@ -171,7 +186,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                               ),
                               textAlign: TextAlign.center,
                             ),
-                            SizedBox(height: 16),
+                            const SizedBox(height: 16),
                             FadeTransition(
                               opacity: _fadeAnimation,
                               child: Text(
@@ -188,7 +203,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                         ),
                       ),
 
-                      SizedBox(height: 40),
+                      const SizedBox(height: 40),
 
                       // Animation GIFs illustration
                       FadeTransition(
@@ -196,7 +211,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                         child: SizedBox(
                           height: 220,
                           child: Container(
-                            padding: EdgeInsets.all(20),
+                            padding: const EdgeInsets.all(20),
                             decoration: BoxDecoration(
                               gradient: LinearGradient(
                                 colors: [
@@ -219,7 +234,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                                     0.1,
                                   ),
                                   blurRadius: 20,
-                                  offset: Offset(0, 10),
+                                  offset: const Offset(0, 10),
                                 ),
                               ],
                             ),
@@ -231,14 +246,14 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                                   Icons.phone_android,
                                   'Interface',
                                 ),
-                                SizedBox(width: 16),
+                                const SizedBox(width: 16),
                                 _buildAnimationGif(
                                   theme,
                                   'assets/mouse.gif',
                                   Icons.mouse,
                                   'Mouse Control',
                                 ),
-                                SizedBox(width: 16),
+                                const SizedBox(width: 16),
                                 _buildAnimationGif(
                                   theme,
                                   'assets/wifi.gif',
@@ -268,13 +283,13 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                               Icons.wifi,
                               'Wireless\nControl',
                             ),
-                            SizedBox(width: 24),
+                            const SizedBox(width: 24),
                             _buildFeatureItem(
                               theme,
                               Icons.touch_app,
                               'Touch\nGestures',
                             ),
-                            SizedBox(width: 24),
+                            const SizedBox(width: 24),
                             _buildFeatureItem(
                               theme,
                               Icons.speed,
@@ -283,7 +298,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                           ],
                         ),
 
-                        SizedBox(height: 40),
+                        const SizedBox(height: 40),
 
                         // Get Started Button
                         SizedBox(
@@ -293,7 +308,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                             style: ElevatedButton.styleFrom(
                               backgroundColor: theme.colorScheme.primary,
                               foregroundColor: Colors.white,
-                              padding: EdgeInsets.symmetric(vertical: 20),
+                              padding: const EdgeInsets.symmetric(vertical: 20),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(16),
                               ),
@@ -301,7 +316,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                               shadowColor: theme.colorScheme.primary
                                   .withOpacity(0.3),
                             ),
-                            child: Row(
+                            child: const Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
                                 Text(
@@ -373,7 +388,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
               ),
             ),
           ),
-          SizedBox(height: 12),
+          const SizedBox(height: 12),
           Text(
             label,
             style: theme.textTheme.bodySmall?.copyWith(
@@ -394,14 +409,14 @@ class _OnboardingScreenState extends State<OnboardingScreen>
       child: Column(
         children: [
           Container(
-            padding: EdgeInsets.all(16),
+            padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
               color: theme.colorScheme.primary.withOpacity(0.1),
               borderRadius: BorderRadius.circular(16),
             ),
             child: Icon(icon, color: theme.colorScheme.primary, size: 24),
           ),
-          SizedBox(height: 8),
+          const SizedBox(height: 8),
           Text(
             label,
             style: theme.textTheme.bodySmall?.copyWith(
