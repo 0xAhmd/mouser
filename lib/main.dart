@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:mouser/screens/main_page.dart';
+import 'package:mouser/screens/onboarding_screen.dart';
 
 void main() {
   runApp(Mouser());
@@ -21,7 +21,7 @@ class Mouser extends StatelessWidget {
         ),
         fontFamily: 'SF Pro Display',
       ),
-      home: MouserScreen(),
+      home: OnboardingScreen(),
     );
   }
 }
