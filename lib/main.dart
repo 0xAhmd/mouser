@@ -14,6 +14,7 @@ class Mouser extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      debugShowCheckedModeBanner: false,
       title: 'PC Mouse Controller',
       theme: ThemeData(
         primarySwatch: Colors.blue,
