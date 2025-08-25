@@ -37,7 +37,7 @@ class Mouser extends StatelessWidget {
         builder: (context, child) {
           return MaterialApp(
             debugShowCheckedModeBanner: false,
-            title: 'PC Mouse & Keyboard Controller',
+
             theme: ThemeData(
               useMaterial3: true,
               colorScheme: ColorScheme.fromSeed(
