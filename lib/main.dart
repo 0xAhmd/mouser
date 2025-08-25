@@ -24,7 +24,7 @@ class Mouser extends StatelessWidget {
         ),
       ],
       child: ScreenUtilInit(
-        designSize: const Size(375, 812), // iPhone 11 Pro design size
+        designSize: const Size(375, 812), 
         minTextAdapt: true,
         splitScreenMode: true,
         useInheritedMediaQuery: true,
