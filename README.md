@@ -209,18 +209,6 @@ await keyboardService.sendCommand('key_combination', {'keys': ['ctrl', 'c']});
 4. Push to the branch (`git push origin feature/amazing-feature`)
 5. Open a Pull Request
 
-## 🎉 Acknowledgments
-
-- **pynput** library for cross-platform input control
-- **Flutter** team for the amazing mobile framework
-- **Flask** for the lightweight web framework
-
-## 📞 Support
-
-If you encounter any issues or have questions:
-1. Check the troubleshooting section above
-2. Open an issue on GitHub
-3. Review the API documentation
 
 ---
 
