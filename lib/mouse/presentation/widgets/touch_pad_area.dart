@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 class TouchpadArea extends StatelessWidget {
   final bool isConnected;
@@ -21,35 +22,45 @@ class TouchpadArea extends StatelessWidget {
       onTap: onTap,
       child: Container(
         width: double.infinity,
-        decoration: BoxDecoration(borderRadius: BorderRadius.circular(20)),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(20.r),
+        ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Container(
-              padding: const EdgeInsets.all(20),
+              padding: EdgeInsets.all(20.w),
               decoration: BoxDecoration(
                 color: theme.colorScheme.primary.withOpacity(0.1),
                 shape: BoxShape.circle,
               ),
               child: Icon(
                 Icons.touch_app,
-                size: 48,
+                size: 48.sp,
                 color: theme.colorScheme.primary,
               ),
             ),
-            const SizedBox(height: 20),
+            SizedBox(height: 20.h),
             Text(
               'Touchpad',
-              style: theme.textTheme.headlineSmall?.copyWith(
+              style: TextStyle(
+                fontSize: 24.sp,
                 fontWeight: FontWeight.bold,
                 color: theme.colorScheme.primary,
               ),
             ),
-            const SizedBox(height: 8),
-            Text(
-              'Drag to move • Tap to click',
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.onSurface.withOpacity(0.6),
+            SizedBox(height: 8.h),
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: 20.w),
+              child: Text(
+                'Drag to move • Tap to click',
+                style: TextStyle(
+                  fontSize: 14.sp,
+                  color: theme.colorScheme.onSurface.withOpacity(0.6),
+                ),
+                textAlign: TextAlign.center,
+                overflow: TextOverflow.ellipsis,
+                maxLines: 2,
               ),
             ),
           ],

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 class ControlButton extends StatefulWidget {
   final IconData icon;
@@ -52,12 +53,12 @@ class _ControlButtonState extends State<ControlButton>
           scale: _scaleAnimation.value,
           child: Container(
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(16.r),
               boxShadow: [
                 BoxShadow(
                   color: widget.color.withOpacity(0.2),
-                  blurRadius: 8,
-                  offset: const Offset(0, 4),
+                  blurRadius: 8.r,
+                  offset: Offset(0, 4.h),
                 ),
               ],
             ),
@@ -72,20 +73,29 @@ class _ControlButtonState extends State<ControlButton>
               style: ElevatedButton.styleFrom(
                 backgroundColor: widget.color,
                 foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 16),
+                padding: EdgeInsets.symmetric(vertical: 16.h),
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
+                  borderRadius: BorderRadius.circular(16.r),
                 ),
                 elevation: 0,
+                minimumSize: Size(double.infinity, 60.h),
               ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(widget.icon, size: 24),
-                  const SizedBox(height: 4),
-                  Text(
-                    widget.label,
-                    style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+                  Icon(widget.icon, size: 24.sp),
+                  SizedBox(height: 4.h),
+                  Flexible(
+                    child: Text(
+                      widget.label,
+                      style: TextStyle(
+                        fontSize: 12.sp,
+                        fontWeight: FontWeight.w600,
+                      ),
+                      textAlign: TextAlign.center,
+                      overflow: TextOverflow.ellipsis,
+                      maxLines: 1,
+                    ),
                   ),
                 ],
               ),

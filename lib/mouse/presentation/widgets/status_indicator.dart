@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 class StatusIndicator extends StatelessWidget {
   final bool isConnected;
@@ -8,15 +9,15 @@ class StatusIndicator extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(8),
+      padding: EdgeInsets.all(8.w),
       decoration: BoxDecoration(
         color: Colors.white.withOpacity(0.2),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(12.r),
       ),
       child: Icon(
         isConnected ? Icons.wifi : Icons.wifi_off,
         color: Colors.white,
-        size: 20,
+        size: 20.sp,
       ),
     );
   }

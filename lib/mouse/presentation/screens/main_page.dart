@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart' hide ConnectionState;
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:mouser/mouse/presentation/widgets/control_button.dart';
 import 'package:mouser/mouse/presentation/widgets/touch_pad_area.dart';
 import 'package:mouser/mouse/presentation/widgets/animated_button.dart';
@@ -56,11 +57,15 @@ class _MouserScreenState extends State<MouserScreen>
   void _showSnackBar(String message, Color color) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(message),
+        content: Text(
+          message,
+          style: TextStyle(fontSize: 14.sp),
+        ),
         backgroundColor: color,
         behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        margin: const EdgeInsets.all(16),
+        shape:
+            RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
+        margin: EdgeInsets.all(16.w),
       ),
     );
   }
@@ -85,9 +90,6 @@ class _MouserScreenState extends State<MouserScreen>
                   if (state.errorMessage != null) {
                     HapticFeedback.heavyImpact();
                     _showSnackBar(state.errorMessage!, Colors.red);
-                  } else {
-                    HapticFeedback.lightImpact();
-                    _showSnackBar('Disconnected', Colors.orange);
                   }
                 }
               },
@@ -106,18 +108,18 @@ class _MouserScreenState extends State<MouserScreen>
               _buildHeader(theme),
               Expanded(
                 child: SingleChildScrollView(
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  padding: EdgeInsets.symmetric(horizontal: 20.w),
                   child: Column(
                     children: [
-                      const SizedBox(height: 20),
+                      SizedBox(height: 20.h),
                       _buildConnectionCard(theme),
-                      const SizedBox(height: 20),
+                      SizedBox(height: 20.h),
                       _buildSensitivityCard(theme),
-                      const SizedBox(height: 20),
+                      SizedBox(height: 20.h),
                       _buildTouchpadCard(theme),
-                      const SizedBox(height: 20),
+                      SizedBox(height: 20.h),
                       _buildControlButtons(theme),
-                      const SizedBox(height: 40),
+                      SizedBox(height: 40.h),
                     ],
                   ),
                 ),
@@ -136,7 +138,7 @@ class _MouserScreenState extends State<MouserScreen>
           animation: _connectionController,
           builder: (context, child) {
             return Container(
-              padding: const EdgeInsets.all(20),
+              padding: EdgeInsets.all(20.w),
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: [
@@ -156,8 +158,8 @@ class _MouserScreenState extends State<MouserScreen>
                             ? theme.colorScheme.primary
                             : theme.colorScheme.error)
                         .withOpacity(0.3),
-                    blurRadius: 20,
-                    offset: const Offset(0, 10),
+                    blurRadius: 20.r,
+                    offset: Offset(0, 10.h),
                   ),
                 ],
               ),
@@ -167,35 +169,39 @@ class _MouserScreenState extends State<MouserScreen>
                     animation: _pulseController,
                     builder: (context, child) {
                       return Container(
-                        padding: const EdgeInsets.all(12),
+                        padding: EdgeInsets.all(12.w),
                         decoration: BoxDecoration(
                           color: Colors.white.withOpacity(0.2),
-                          borderRadius: BorderRadius.circular(16),
+                          borderRadius: BorderRadius.circular(16.r),
                           border: Border.all(
                             color: Colors.white.withOpacity(
                               _pulseController.value * 0.5 + 0.3,
                             ),
-                            width: 2,
+                            width: 2.w,
                           ),
                         ),
-                        child: const Icon(Icons.computer,
-                            color: Colors.white, size: 32),
+                        child: Icon(
+                          Icons.computer,
+                          color: Colors.white,
+                          size: 32.sp,
+                        ),
                       );
                     },
                   ),
-                  const SizedBox(width: 16),
+                  SizedBox(width: 16.w),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
                           'Mouse Controller',
-                          style: theme.textTheme.headlineSmall?.copyWith(
+                          style: TextStyle(
                             color: Colors.white,
                             fontWeight: FontWeight.bold,
+                            fontSize: 22.sp,
                           ),
                         ),
-                        const SizedBox(height: 4),
+                        SizedBox(height: 4.h),
                         AnimatedSwitcher(
                           duration: const Duration(milliseconds: 300),
                           child: Text(
@@ -203,9 +209,11 @@ class _MouserScreenState extends State<MouserScreen>
                             connectionState.isConnected
                                 ? 'Connected to ${connectionState.serverIP}'
                                 : 'Not Connected',
-                            style: theme.textTheme.bodyMedium?.copyWith(
+                            style: TextStyle(
                               color: Colors.white.withOpacity(0.9),
+                              fontSize: 14.sp,
                             ),
+                            overflow: TextOverflow.ellipsis,
                           ),
                         ),
                       ],
@@ -230,11 +238,12 @@ class _MouserScreenState extends State<MouserScreen>
             children: [
               Text(
                 'Connection',
-                style: theme.textTheme.titleLarge?.copyWith(
+                style: TextStyle(
+                  fontSize: 20.sp,
                   fontWeight: FontWeight.bold,
                 ),
               ),
-              const SizedBox(height: 16),
+              SizedBox(height: 16.h),
               CustomTextField(
                 controller: _ipController,
                 label: 'PC IP Address',
@@ -244,7 +253,7 @@ class _MouserScreenState extends State<MouserScreen>
                   context.read<ConnectionCubit>().updateServerIP(value);
                 },
               ),
-              const SizedBox(height: 16),
+              SizedBox(height: 16.h),
               SizedBox(
                 width: double.infinity,
                 child: AnimatedButton(
@@ -258,7 +267,7 @@ class _MouserScreenState extends State<MouserScreen>
                 ),
               ),
               if (connectionState.isConnected) ...[
-                const SizedBox(height: 12),
+                SizedBox(height: 12.h),
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
@@ -268,22 +277,22 @@ class _MouserScreenState extends State<MouserScreen>
                     style: ElevatedButton.styleFrom(
                       backgroundColor: theme.colorScheme.error,
                       foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      padding: EdgeInsets.symmetric(vertical: 16.h),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
+                        borderRadius: BorderRadius.circular(16.r),
                       ),
                       elevation: 0,
                     ),
-                    child: const Row(
+                    child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.link_off),
-                        SizedBox(width: 8),
+                        Icon(Icons.link_off, size: 20.sp),
+                        SizedBox(width: 8.w),
                         Text(
                           'Disconnect',
                           style: TextStyle(
                             fontWeight: FontWeight.w600,
-                            fontSize: 16,
+                            fontSize: 16.sp,
                           ),
                         ),
                       ],
@@ -307,40 +316,41 @@ class _MouserScreenState extends State<MouserScreen>
             children: [
               Row(
                 children: [
-                  Icon(Icons.tune, color: theme.colorScheme.primary),
-                  const SizedBox(width: 8),
+                  Icon(Icons.tune,
+                      color: theme.colorScheme.primary, size: 24.sp),
+                  SizedBox(width: 8.w),
                   Text(
                     'Sensitivity',
-                    style: theme.textTheme.titleMedium?.copyWith(
+                    style: TextStyle(
                       fontWeight: FontWeight.w600,
+                      fontSize: 18.sp,
                     ),
                   ),
                   const Spacer(),
                   Container(
                     padding:
-                        const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
                     decoration: BoxDecoration(
                       color: theme.colorScheme.primary.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(20),
+                      borderRadius: BorderRadius.circular(20.r),
                     ),
                     child: Text(
                       mouseState.sensitivity.toStringAsFixed(1),
                       style: TextStyle(
                         color: theme.colorScheme.primary,
                         fontWeight: FontWeight.bold,
+                        fontSize: 14.sp,
                       ),
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 12),
+              SizedBox(height: 12.h),
               SliderTheme(
                 data: SliderTheme.of(context).copyWith(
-                  trackHeight: 6,
-                  thumbShape:
-                      const RoundSliderThumbShape(enabledThumbRadius: 12),
-                  overlayShape:
-                      const RoundSliderOverlayShape(overlayRadius: 20),
+                  trackHeight: 6.h,
+                  thumbShape: RoundSliderThumbShape(enabledThumbRadius: 12.r),
+                  overlayShape: RoundSliderOverlayShape(overlayRadius: 20.r),
                 ),
                 child: Slider(
                   value: mouseState.sensitivity,
@@ -364,11 +374,11 @@ class _MouserScreenState extends State<MouserScreen>
     return BlocBuilder<ConnectionCubit, ConnectionState>(
       builder: (context, connectionState) {
         return GlassCard(
-          padding: const EdgeInsets.all(0),
+          padding: EdgeInsets.zero,
           child: Container(
-            height: 300,
+            height: 300.h,
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(20),
+              borderRadius: BorderRadius.circular(20.r),
               gradient: LinearGradient(
                 colors: [
                   theme.colorScheme.primary.withOpacity(0.1),
@@ -410,11 +420,12 @@ class _MouserScreenState extends State<MouserScreen>
             children: [
               Text(
                 'Quick Actions',
-                style: theme.textTheme.titleLarge?.copyWith(
+                style: TextStyle(
+                  fontSize: 20.sp,
                   fontWeight: FontWeight.bold,
                 ),
               ),
-              const SizedBox(height: 16),
+              SizedBox(height: 16.h),
               Row(
                 children: [
                   Expanded(
@@ -429,7 +440,7 @@ class _MouserScreenState extends State<MouserScreen>
                       color: theme.colorScheme.primary,
                     ),
                   ),
-                  const SizedBox(width: 12),
+                  SizedBox(width: 12.w),
                   Expanded(
                     child: ControlButton(
                       icon: Icons.menu,
@@ -444,7 +455,7 @@ class _MouserScreenState extends State<MouserScreen>
                   ),
                 ],
               ),
-              const SizedBox(height: 12),
+              SizedBox(height: 12.h),
               Row(
                 children: [
                   Expanded(
@@ -459,7 +470,7 @@ class _MouserScreenState extends State<MouserScreen>
                       color: theme.colorScheme.tertiary,
                     ),
                   ),
-                  const SizedBox(width: 12),
+                  SizedBox(width: 12.w),
                   Expanded(
                     child: ControlButton(
                       icon: Icons.keyboard_arrow_down,
