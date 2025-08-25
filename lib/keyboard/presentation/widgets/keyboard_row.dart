@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'virtual_key.dart';
 
 class KeyboardRow extends StatelessWidget {
@@ -28,17 +29,34 @@ class KeyboardRow extends StatelessWidget {
     return shiftMap[key.toLowerCase()] ?? key.toUpperCase();
   }
 
+  double _calculateKeyWidth(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final availableWidth = screenWidth - 64.w; // Account for padding and margins
+    final keyCount = keys.length;
+    final totalMargin = (keyCount * 4.w); // 2w margin on each side per key
+    final keyWidth = (availableWidth - totalMargin) / keyCount;
+    
+    // Ensure minimum width and maximum width constraints
+    return keyWidth.clamp(30.w, 50.w);
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: keys.map((key) {
-        return VirtualKey(
-          label: _getDisplayKey(key),
-          onPressed: () => onKeyPressed(key),
-          isPressed: pressedKeys.contains(key),
-        );
-      }).toList(),
+    final keyWidth = _calculateKeyWidth(context);
+    
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: keys.map((key) {
+          return VirtualKey(
+            label: _getDisplayKey(key),
+            width: keyWidth,
+            onPressed: () => onKeyPressed(key),
+            isPressed: pressedKeys.contains(key),
+          );
+        }).toList(),
+      ),
     );
   }
 }

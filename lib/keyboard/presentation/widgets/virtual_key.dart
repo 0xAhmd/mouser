@@ -56,9 +56,9 @@ class _VirtualKeyState extends State<VirtualKey>
         return Transform.scale(
           scale: _scaleAnimation.value,
           child: Container(
-            width: widget.width ?? 45.w,
-            height: 45.h,
-            margin: EdgeInsets.all(2.w),
+            width: widget.width ?? 35.w,
+            height: 40.h,
+            margin: EdgeInsets.symmetric(horizontal: 1.w, vertical: 1.h),
             child: ElevatedButton(
               onPressed: widget.onPressed == null
                   ? null
@@ -76,21 +76,27 @@ class _VirtualKeyState extends State<VirtualKey>
                     : theme.colorScheme.onSurface,
                 padding: EdgeInsets.zero,
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8.r),
+                  borderRadius: BorderRadius.circular(6.r),
                 ),
-                elevation: widget.isPressed ? 0 : 2,
+                elevation: widget.isPressed ? 0 : 1,
                 side: BorderSide(
                   color: theme.colorScheme.outline.withOpacity(0.3),
-                  width: 1.w,
+                  width: 0.5.w,
                 ),
+                minimumSize: Size.zero,
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
               ),
-              child: Text(
-                widget.label,
-                style: TextStyle(
-                  fontSize: 12.sp,
-                  fontWeight: FontWeight.w600,
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text(
+                  widget.label,
+                  style: TextStyle(
+                    fontSize: 10.sp,
+                    fontWeight: FontWeight.w600,
+                  ),
+                  textAlign: TextAlign.center,
+                  maxLines: 1,
                 ),
-                textAlign: TextAlign.center,
               ),
             ),
           ),
