@@ -1,7 +1,9 @@
+// lib/mouse/presentation/screens/main_page.dart
 import 'package:flutter/material.dart' hide ConnectionState;
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:mouser/keyboard/presentation/pages/keyboard_page.dart';
 import 'package:mouser/mouse/presentation/widgets/control_button.dart';
 import 'package:mouser/mouse/presentation/widgets/touch_pad_area.dart';
 import 'package:mouser/mouse/presentation/widgets/animated_button.dart';
@@ -23,9 +25,12 @@ class MouserScreen extends StatefulWidget {
 class _MouserScreenState extends State<MouserScreen>
     with TickerProviderStateMixin {
   final TextEditingController _ipController = TextEditingController();
+  int _currentIndex = 0;
 
   late AnimationController _pulseController;
   late AnimationController _connectionController;
+
+  final List<Widget> _pages = [];
 
   @override
   void initState() {
@@ -38,6 +43,12 @@ class _MouserScreenState extends State<MouserScreen>
       duration: const Duration(milliseconds: 300),
       vsync: this,
     );
+
+    // Initialize pages
+    _pages.addAll([
+      _buildMousePage(),
+      const KeyboardPage(),
+    ]);
 
     // Initialize IP controller with current state
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -103,32 +114,59 @@ class _MouserScreenState extends State<MouserScreen>
               },
             ),
           ],
-          child: Column(
-            children: [
-              _buildHeader(theme),
-              Expanded(
-                child: SingleChildScrollView(
-                  padding: EdgeInsets.symmetric(horizontal: 20.w),
-                  child: Column(
-                    children: [
-                      SizedBox(height: 20.h),
-                      _buildConnectionCard(theme),
-                      SizedBox(height: 20.h),
-                      _buildSensitivityCard(theme),
-                      SizedBox(height: 20.h),
-                      _buildTouchpadCard(theme),
-                      SizedBox(height: 20.h),
-                      _buildControlButtons(theme),
-                      SizedBox(height: 40.h),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ),
+          child: _currentIndex == 0
+              ? Column(
+                  children: [
+                    _buildHeader(theme),
+                    Expanded(
+                      child: SingleChildScrollView(
+                        padding: EdgeInsets.symmetric(horizontal: 20.w),
+                        child: Column(
+                          children: [
+                            SizedBox(height: 20.h),
+                            _buildConnectionCard(theme),
+                            SizedBox(height: 20.h),
+                            _buildSensitivityCard(theme),
+                            SizedBox(height: 20.h),
+                            _buildTouchpadCard(theme),
+                            SizedBox(height: 20.h),
+                            _buildControlButtons(theme),
+                            SizedBox(height: 40.h),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                )
+              : _pages[_currentIndex],
         ),
       ),
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: _currentIndex,
+        onTap: (index) {
+          setState(() {
+            _currentIndex = index;
+          });
+        },
+        type: BottomNavigationBarType.fixed,
+        selectedItemColor: theme.colorScheme.primary,
+        unselectedItemColor: theme.colorScheme.onSurface.withOpacity(0.6),
+        items: const [
+          BottomNavigationBarItem(
+            icon: Icon(Icons.mouse),
+            label: 'Mouse',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.keyboard),
+            label: 'Keyboard',
+          ),
+        ],
+      ),
     );
+  }
+
+  Widget _buildMousePage() {
+    return const SizedBox(); // This will be handled by the main build method
   }
 
   Widget _buildHeader(ThemeData theme) {
@@ -181,7 +219,7 @@ class _MouserScreenState extends State<MouserScreen>
                           ),
                         ),
                         child: Icon(
-                          Icons.computer,
+                          _currentIndex == 0 ? Icons.computer : Icons.keyboard,
                           color: Colors.white,
                           size: 32.sp,
                         ),
@@ -194,7 +232,9 @@ class _MouserScreenState extends State<MouserScreen>
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Mouse Controller',
+                          _currentIndex == 0
+                              ? 'Mouse Controller'
+                              : 'Keyboard Controller',
                           style: TextStyle(
                             color: Colors.white,
                             fontWeight: FontWeight.bold,

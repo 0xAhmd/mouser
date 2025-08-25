@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:mouser/app_launcher.dart';
+import 'package:mouser/keyboard/presentation/cubit/keyboard_cubit.dart';
 import 'package:mouser/mouse/presentation/cubit/connecton_cubit.dart';
 import 'package:mouser/mouse/presentation/cubit/mouse_cubit.dart';
 
@@ -22,16 +23,21 @@ class Mouser extends StatelessWidget {
             connectionCubit: context.read<ConnectionCubit>(),
           ),
         ),
+        BlocProvider(
+          create: (context) => KeyboardCubit(
+            connectionCubit: context.read<ConnectionCubit>(),
+          ),
+        ),
       ],
       child: ScreenUtilInit(
-        designSize: const Size(375, 812), 
+        designSize: const Size(375, 812), // iPhone 11 Pro design size
         minTextAdapt: true,
         splitScreenMode: true,
         useInheritedMediaQuery: true,
         builder: (context, child) {
           return MaterialApp(
             debugShowCheckedModeBanner: false,
-            title: 'PC Mouse Controller',
+            title: 'PC Mouse & Keyboard Controller',
             theme: ThemeData(
               useMaterial3: true,
               colorScheme: ColorScheme.fromSeed(
