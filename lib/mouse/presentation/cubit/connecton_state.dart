@@ -8,7 +8,7 @@ class ConnectionState extends Equatable {
   final String? errorMessage;
 
   const ConnectionState({
-    this.serverIP = '192.168.1.100',
+    this.serverIP = '192.168.1.1',
     this.serverPort = 8080,
     this.isConnected = false,
     this.isConnecting = false,
