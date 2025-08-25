@@ -9,9 +9,15 @@ environment:
   sdk: '>=3.0.0 <4.0.0'
 
 dependencies:
+  dio: ^5.9.0
+  equatable: ^2.0.7
   flutter:
     sdk: flutter
+  flutter_bloc: ^9.1.1
+  flutter_screenutil: ^5.9.3
   http: ^1.1.0
+  retrofit: ^4.7.2
+  retrofit_generator: ^10.0.2
   shared_preferences: ^2.2.2
 
 dev_dependencies:
