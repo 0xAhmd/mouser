@@ -56,6 +56,7 @@ class _KeyboardPageState extends State<KeyboardPage> {
     final theme = Theme.of(context);
 
     return Scaffold(
+      extendBody: true,
       backgroundColor: theme.colorScheme.surface,
       body: SafeArea(
         child: BlocListener<KeyboardCubit, KeyboardState>(

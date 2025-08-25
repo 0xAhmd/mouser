@@ -66,6 +66,7 @@ class _MouserScreenState extends State<MouserScreen> {
     final theme = Theme.of(context);
 
     return Scaffold(
+      extendBody: true,
       backgroundColor: theme.colorScheme.surface,
       body: SafeArea(
         child: MultiBlocListener(
