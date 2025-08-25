@@ -38,14 +38,29 @@ def get_local_ip():
 
 def get_key_from_string(key_string):
     """Convert string to pynput key"""
+    # Handle arrow keys from Flutter format
+    if key_string.endswith('_arrow'):
+        direction = key_string.replace('_arrow', '')
+        arrow_keys = {
+            'up': Key.up,
+            'down': Key.down,
+            'left': Key.left,
+            'right': Key.right
+        }
+        return arrow_keys.get(direction, Key.up)
+    
     # Special keys mapping
     special_keys = {
+        'return': Key.enter,  # Flutter sends 'Return' 
         'enter': Key.enter,
         'space': Key.space,
         'backspace': Key.backspace,
+        'BackSpace': Key.backspace,  # Flutter sends 'BackSpace'
         'delete': Key.delete,
         'tab': Key.tab,
+        'Tab': Key.tab,
         'escape': Key.esc,
+        'Escape': Key.esc,
         'shift': Key.shift,
         'ctrl': Key.ctrl,
         'alt': Key.alt,
@@ -64,9 +79,9 @@ def get_key_from_string(key_string):
         'f9': Key.f9, 'f10': Key.f10, 'f11': Key.f11, 'f12': Key.f12
     }
     
-    key_lower = key_string.lower()
-    if key_lower in special_keys:
-        return special_keys[key_lower]
+    # Check if it's a special key
+    if key_string in special_keys:
+        return special_keys[key_string]
     else:
         # Regular character
         return KeyCode.from_char(key_string)
@@ -81,8 +96,13 @@ def handle_mouse_command():
     """Handle mouse commands from mobile app"""
     try:
         data = request.get_json()
+        if not data:
+            return jsonify({"status": "error", "error": "No JSON data provided"}), 400
+            
         action = data.get('action')
         command_data = data.get('data', {})
+        
+        print(f"Received mouse command: {action}, data: {command_data}")
         
         if action == 'move':
             # Move mouse cursor
@@ -118,39 +138,90 @@ def handle_mouse_command():
             mouse_controller.release(Button.left)
             
         else:
-            return jsonify({"error": "Unknown mouse action"}), 400
+            return jsonify({"status": "error", "error": f"Unknown mouse action: {action}"}), 400
             
-        return jsonify({"status": "success"})
+        return jsonify({"status": "success", "message": f"Mouse {action} executed"})
         
     except Exception as e:
         print(f"Error handling mouse command: {e}")
-        return jsonify({"error": str(e)}), 500
+        return jsonify({"status": "error", "error": str(e)}), 500
 
 @app.route('/keyboard', methods=['POST'])
 def handle_keyboard_command():
     """Handle keyboard commands from mobile app"""
     try:
+        # Check if we received JSON data
+        if not request.is_json:
+            return jsonify({"status": "error", "error": "Request must be JSON"}), 400
+            
         data = request.get_json()
+        if not data:
+            return jsonify({"status": "error", "error": "No JSON data provided"}), 400
+            
         action = data.get('action')
         command_data = data.get('data', {})
+        
+        print(f"Received keyboard command: {action}, data: {command_data}")
         
         if action == 'type':
             # Type text
             text = command_data.get('text', '')
-            keyboard_controller.type(text)
+            if text:
+                keyboard_controller.type(text)
             
-        elif action == 'key_press':
-            # Press and release a single key
+        elif action == 'key':
+            # Press and release a single key (Flutter sends 'key' action)
             key_string = command_data.get('key', '')
-            key = get_key_from_string(key_string)
-            keyboard_controller.press(key)
-            keyboard_controller.release(key)
+            shift = command_data.get('shift', False)
+            ctrl = command_data.get('ctrl', False)
+            alt = command_data.get('alt', False)
+            
+            if not key_string:
+                return jsonify({"status": "error", "error": "No key provided"}), 400
+            
+            print(f"Processing key: {key_string}, modifiers: shift={shift}, ctrl={ctrl}, alt={alt}")
+            
+            # Handle modifier combinations
+            modifiers = []
+            if ctrl:
+                modifiers.append(Key.ctrl)
+            if alt:
+                modifiers.append(Key.alt)
+            if shift:
+                modifiers.append(Key.shift)
+            
+            try:
+                key = get_key_from_string(key_string)
+                
+                # Press modifiers
+                for mod in modifiers:
+                    keyboard_controller.press(mod)
+                
+                # Press and release the main key
+                keyboard_controller.press(key)
+                keyboard_controller.release(key)
+                
+                # Release modifiers in reverse order
+                for mod in reversed(modifiers):
+                    keyboard_controller.release(mod)
+                    
+            except Exception as key_error:
+                print(f"Error processing key '{key_string}': {key_error}")
+                return jsonify({"status": "error", "error": f"Invalid key: {key_string}"}), 400
+                
+        elif action == 'key_press':
+            # Legacy support - Press and release a single key
+            key_string = command_data.get('key', '')
+            if key_string:
+                key = get_key_from_string(key_string)
+                keyboard_controller.press(key)
+                keyboard_controller.release(key)
             
         elif action == 'key_combination':
             # Handle key combinations like Ctrl+C, Alt+Tab, etc.
             keys = command_data.get('keys', [])
             if not keys:
-                return jsonify({"error": "No keys provided for combination"}), 400
+                return jsonify({"status": "error", "error": "No keys provided for combination"}), 400
             
             # Convert strings to keys
             key_objects = [get_key_from_string(k) for k in keys]
@@ -166,23 +237,25 @@ def handle_keyboard_command():
         elif action == 'key_hold_start':
             # Start holding a key
             key_string = command_data.get('key', '')
-            key = get_key_from_string(key_string)
-            keyboard_controller.press(key)
+            if key_string:
+                key = get_key_from_string(key_string)
+                keyboard_controller.press(key)
             
         elif action == 'key_hold_end':
             # Stop holding a key
             key_string = command_data.get('key', '')
-            key = get_key_from_string(key_string)
-            keyboard_controller.release(key)
+            if key_string:
+                key = get_key_from_string(key_string)
+                keyboard_controller.release(key)
             
         else:
-            return jsonify({"error": "Unknown keyboard action"}), 400
+            return jsonify({"status": "error", "error": f"Unknown keyboard action: {action}"}), 400
             
-        return jsonify({"status": "success"})
+        return jsonify({"status": "success", "message": f"Keyboard {action} executed"})
         
     except Exception as e:
         print(f"Error handling keyboard command: {e}")
-        return jsonify({"error": str(e)}), 500
+        return jsonify({"status": "error", "error": str(e)}), 500
 
 @app.route('/status', methods=['GET'])
 def get_status():
@@ -232,7 +305,7 @@ if __name__ == '__main__':
         app.run(
             host='0.0.0.0',  # Allow connections from any IP
             port=8080,
-            debug=False,
+            debug=True,  # Enable debug mode to see more detailed errors
             threaded=True
         )
     except KeyboardInterrupt:
