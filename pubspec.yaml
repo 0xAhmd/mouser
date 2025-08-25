@@ -17,7 +17,6 @@ dependencies:
   flutter_screenutil: ^5.9.3
   http: ^1.1.0
   retrofit: ^4.7.2
-  retrofit_generator: ^10.0.2
   shared_preferences: ^2.2.2
 
 dev_dependencies:
@@ -25,6 +24,10 @@ dev_dependencies:
     sdk: flutter
   flutter_lints: ^3.0.0
   flutter_native_splash: ^2.3.10
+  build_runner: ^2.4.9
+  json_annotation: ^4.8.1
+  json_serializable: ^6.7.1
+  retrofit_generator: ^10.0.2
 
 flutter:
   uses-material-design: true
