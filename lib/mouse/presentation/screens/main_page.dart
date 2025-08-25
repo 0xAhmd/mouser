@@ -9,7 +9,6 @@ import 'package:mouser/mouse/presentation/widgets/touch_pad_area.dart';
 import 'package:mouser/mouse/presentation/widgets/animated_button.dart';
 import 'package:mouser/mouse/presentation/widgets/custom_text_field.dart';
 import 'package:mouser/mouse/presentation/widgets/glass_card.dart';
-import 'package:mouser/mouse/presentation/widgets/status_indicator.dart';
 import 'package:mouser/mouse/presentation/cubit/connecton_cubit.dart';
 import 'package:mouser/mouse/presentation/cubit/connecton_state.dart';
 import 'package:mouser/mouse/presentation/cubit/mouse_cubit.dart';
@@ -22,35 +21,21 @@ class MouserScreen extends StatefulWidget {
   _MouserScreenState createState() => _MouserScreenState();
 }
 
-class _MouserScreenState extends State<MouserScreen>
-    with TickerProviderStateMixin {
+class _MouserScreenState extends State<MouserScreen> {
   final TextEditingController _ipController = TextEditingController();
   int _currentIndex = 0;
-
-  late AnimationController _pulseController;
-  late AnimationController _connectionController;
 
   final List<Widget> _pages = [];
 
   @override
   void initState() {
     super.initState();
-    _pulseController = AnimationController(
-      duration: const Duration(seconds: 2),
-      vsync: this,
-    )..repeat(reverse: true);
-    _connectionController = AnimationController(
-      duration: const Duration(milliseconds: 300),
-      vsync: this,
-    );
 
-    // Initialize pages
     _pages.addAll([
       _buildMousePage(),
       const KeyboardPage(),
     ]);
 
-    // Initialize IP controller with current state
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final connectionState = context.read<ConnectionCubit>().state;
       _ipController.text = connectionState.serverIP;
@@ -59,8 +44,6 @@ class _MouserScreenState extends State<MouserScreen>
 
   @override
   void dispose() {
-    _pulseController.dispose();
-    _connectionController.dispose();
     _ipController.dispose();
     super.dispose();
   }
@@ -68,10 +51,7 @@ class _MouserScreenState extends State<MouserScreen>
   void _showSnackBar(String message, Color color) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(
-          message,
-          style: TextStyle(fontSize: 14.sp),
-        ),
+        content: Text(message, style: TextStyle(fontSize: 14.sp)),
         backgroundColor: color,
         behavior: SnackBarBehavior.floating,
         shape:
@@ -93,11 +73,9 @@ class _MouserScreenState extends State<MouserScreen>
             BlocListener<ConnectionCubit, ConnectionState>(
               listener: (context, state) {
                 if (state.isConnected) {
-                  _connectionController.forward();
                   HapticFeedback.lightImpact();
                   _showSnackBar('Connected successfully!', Colors.green);
                 } else if (!state.isConnected && !state.isConnecting) {
-                  _connectionController.reverse();
                   if (state.errorMessage != null) {
                     HapticFeedback.heavyImpact();
                     _showSnackBar(state.errorMessage!, Colors.red);
@@ -117,7 +95,10 @@ class _MouserScreenState extends State<MouserScreen>
           child: _currentIndex == 0
               ? Column(
                   children: [
-                    _buildHeader(theme),
+                    Padding(
+                      padding: EdgeInsets.all(16.w),
+                      child: _buildConnectionStatus(),
+                    ), // ✅ unified header
                     Expanded(
                       child: SingleChildScrollView(
                         padding: EdgeInsets.symmetric(horizontal: 20.w),
@@ -143,11 +124,7 @@ class _MouserScreenState extends State<MouserScreen>
       ),
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _currentIndex,
-        onTap: (index) {
-          setState(() {
-            _currentIndex = index;
-          });
-        },
+        onTap: (index) => setState(() => _currentIndex = index),
         type: BottomNavigationBarType.fixed,
         selectedItemColor: theme.colorScheme.primary,
         unselectedItemColor: theme.colorScheme.onSurface.withOpacity(0.6),
@@ -166,104 +143,50 @@ class _MouserScreenState extends State<MouserScreen>
   }
 
   Widget _buildMousePage() {
-    return const SizedBox(); // This will be handled by the main build method
+    return const SizedBox(); // Main build handles page
   }
 
-  Widget _buildHeader(ThemeData theme) {
+  Widget _buildConnectionStatus() {
     return BlocBuilder<ConnectionCubit, ConnectionState>(
       builder: (context, connectionState) {
-        return AnimatedBuilder(
-          animation: _connectionController,
-          builder: (context, child) {
-            return Container(
-              padding: EdgeInsets.all(20.w),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    connectionState.isConnected
-                        ? theme.colorScheme.primary
-                        : theme.colorScheme.error,
-                    connectionState.isConnected
-                        ? theme.colorScheme.primary.withOpacity(0.8)
-                        : theme.colorScheme.error.withOpacity(0.8),
-                  ],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: (connectionState.isConnected
-                            ? theme.colorScheme.primary
-                            : theme.colorScheme.error)
-                        .withOpacity(0.3),
-                    blurRadius: 20.r,
-                    offset: Offset(0, 10.h),
-                  ),
-                ],
+        return GlassCard(
+          child: Row(
+            children: [
+              Icon(
+                connectionState.isConnected ? Icons.wifi : Icons.wifi_off,
+                color: connectionState.isConnected ? Colors.green : Colors.red,
+                size: 24.sp,
               ),
-              child: Row(
-                children: [
-                  AnimatedBuilder(
-                    animation: _pulseController,
-                    builder: (context, child) {
-                      return Container(
-                        padding: EdgeInsets.all(12.w),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.2),
-                          borderRadius: BorderRadius.circular(16.r),
-                          border: Border.all(
-                            color: Colors.white.withOpacity(
-                              _pulseController.value * 0.5 + 0.3,
-                            ),
-                            width: 2.w,
-                          ),
-                        ),
-                        child: Icon(
-                          _currentIndex == 0 ? Icons.computer : Icons.keyboard,
-                          color: Colors.white,
-                          size: 32.sp,
-                        ),
-                      );
-                    },
-                  ),
-                  SizedBox(width: 16.w),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          _currentIndex == 0
-                              ? 'Mouse Controller'
-                              : 'Keyboard Controller',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 22.sp,
-                          ),
-                        ),
-                        SizedBox(height: 4.h),
-                        AnimatedSwitcher(
-                          duration: const Duration(milliseconds: 300),
-                          child: Text(
-                            key: ValueKey(connectionState.isConnected),
-                            connectionState.isConnected
-                                ? 'Connected to ${connectionState.serverIP}'
-                                : 'Not Connected',
-                            style: TextStyle(
-                              color: Colors.white.withOpacity(0.9),
-                              fontSize: 14.sp,
-                            ),
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                      ],
+              SizedBox(width: 12.w),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      connectionState.isConnected
+                          ? 'Connected'
+                          : 'Not Connected',
+                      style: TextStyle(
+                        fontSize: 16.sp,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
-                  ),
-                  StatusIndicator(isConnected: connectionState.isConnected),
-                ],
+                    if (connectionState.isConnected)
+                      Text(
+                        connectionState.serverIP,
+                        style: TextStyle(
+                          fontSize: 12.sp,
+                          color: Theme.of(context)
+                              .colorScheme
+                              .onSurface
+                              .withOpacity(0.6),
+                        ),
+                      ),
+                  ],
+                ),
               ),
-            );
-          },
+            ],
+          ),
         );
       },
     );

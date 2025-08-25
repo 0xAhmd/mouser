@@ -57,18 +57,6 @@ class _KeyboardPageState extends State<KeyboardPage> {
 
     return Scaffold(
       backgroundColor: theme.colorScheme.surface,
-      appBar: AppBar(
-        title: Text(
-          'Virtual Keyboard',
-          style: TextStyle(
-            fontSize: 20.sp,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        backgroundColor: theme.colorScheme.primary,
-        foregroundColor: Colors.white,
-        elevation: 0,
-      ),
       body: SafeArea(
         child: BlocListener<KeyboardCubit, KeyboardState>(
           listener: (context, state) {
