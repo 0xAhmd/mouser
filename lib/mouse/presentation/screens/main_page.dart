@@ -1,5 +1,6 @@
-// lib/mouse/presentation/screens/main_page.dart
+import 'dart:ui';
 import 'package:flutter/material.dart' hide ConnectionState;
+import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -21,9 +22,13 @@ class MouserScreen extends StatefulWidget {
   _MouserScreenState createState() => _MouserScreenState();
 }
 
-class _MouserScreenState extends State<MouserScreen> {
+class _MouserScreenState extends State<MouserScreen>
+    with SingleTickerProviderStateMixin {
   final TextEditingController _ipController = TextEditingController();
   int _currentIndex = 0;
+  bool _isNavBarVisible = true;
+  late AnimationController _animationController;
+  late Animation<double> _animation;
 
   final List<Widget> _pages = [];
 
@@ -36,6 +41,19 @@ class _MouserScreenState extends State<MouserScreen> {
       const KeyboardPage(),
     ]);
 
+    // Initialize animation controller for navigation bar
+    _animationController = AnimationController(
+      duration: const Duration(milliseconds: 300),
+      vsync: this,
+    );
+
+    _animation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
+    );
+
+    // Start with navigation bar visible
+    _animationController.forward();
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final connectionState = context.read<ConnectionCubit>().state;
       _ipController.text = connectionState.serverIP;
@@ -45,7 +63,26 @@ class _MouserScreenState extends State<MouserScreen> {
   @override
   void dispose() {
     _ipController.dispose();
+    _animationController.dispose();
     super.dispose();
+  }
+
+  void _showNavBar() {
+    if (!_isNavBarVisible) {
+      setState(() {
+        _isNavBarVisible = true;
+      });
+      _animationController.forward();
+    }
+  }
+
+  void _hideNavBar() {
+    if (_isNavBarVisible) {
+      setState(() {
+        _isNavBarVisible = false;
+      });
+      _animationController.reverse();
+    }
   }
 
   void _showSnackBar(String message, Color color) {
@@ -68,83 +105,197 @@ class _MouserScreenState extends State<MouserScreen> {
     return Scaffold(
       extendBody: true,
       backgroundColor: theme.colorScheme.surface,
-      body: SafeArea(
-        child: MultiBlocListener(
-          listeners: [
-            BlocListener<ConnectionCubit, ConnectionState>(
-              listener: (context, state) {
-                if (state.isConnected) {
-                  HapticFeedback.lightImpact();
-                  _showSnackBar('Connected successfully!', Colors.green);
-                } else if (!state.isConnected && !state.isConnecting) {
-                  if (state.errorMessage != null) {
-                    HapticFeedback.heavyImpact();
-                    _showSnackBar(state.errorMessage!, Colors.red);
+      body: Stack(
+        children: [
+          SafeArea(
+            child: MultiBlocListener(
+              listeners: [
+                BlocListener<ConnectionCubit, ConnectionState>(
+                  listener: (context, state) {
+                    if (state.isConnected) {
+                      HapticFeedback.lightImpact();
+                      _showSnackBar('Connected successfully!', Colors.green);
+                    } else if (!state.isConnected && !state.isConnecting) {
+                      if (state.errorMessage != null) {
+                        HapticFeedback.heavyImpact();
+                        _showSnackBar(state.errorMessage!, Colors.red);
+                      }
+                    }
+                  },
+                ),
+                BlocListener<MouseCubit, MouseState>(
+                  listener: (context, state) {
+                    if (state.errorMessage != null) {
+                      _showSnackBar(state.errorMessage!, Colors.red);
+                      context.read<MouseCubit>().clearError();
+                    }
+                  },
+                ),
+              ],
+              child: NotificationListener<ScrollNotification>(
+                onNotification: (ScrollNotification scrollInfo) {
+                  // Only handle UserScrollNotification for user-initiated scrolls
+                  if (scrollInfo is UserScrollNotification) {
+                    if (scrollInfo.direction == ScrollDirection.forward) {
+                      // Scrolling up - show nav bar
+                      _showNavBar();
+                    } else if (scrollInfo.direction ==
+                        ScrollDirection.reverse) {
+                      // Scrolling down - hide nav bar
+                      _hideNavBar();
+                    }
                   }
-                }
-              },
+                  return false;
+                },
+                child: _currentIndex == 0
+                    ? Column(
+                        children: [
+                          Padding(
+                            padding: EdgeInsets.all(16.w),
+                            child: _buildConnectionStatus(),
+                          ),
+                          Expanded(
+                            child: SingleChildScrollView(
+                              padding: EdgeInsets.symmetric(horizontal: 20.w),
+                              child: Column(
+                                children: [
+                                  SizedBox(height: 20.h),
+                                  _buildConnectionCard(theme),
+                                  SizedBox(height: 20.h),
+                                  _buildSensitivityCard(theme),
+                                  SizedBox(height: 20.h),
+                                  _buildTouchpadCard(theme),
+                                  SizedBox(height: 20.h),
+                                  _buildControlButtons(theme),
+                                  SizedBox(
+                                      height: 80
+                                          .h), // Modified - reduced from 100.h for smaller nav bar
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                      )
+                    : _pages[_currentIndex],
+              ),
             ),
-            BlocListener<MouseCubit, MouseState>(
-              listener: (context, state) {
-                if (state.errorMessage != null) {
-                  _showSnackBar(state.errorMessage!, Colors.red);
-                  context.read<MouseCubit>().clearError();
-                }
-              },
-            ),
-          ],
-          child: _currentIndex == 0
-              ? Column(
-                  children: [
-                    Padding(
-                      padding: EdgeInsets.all(16.w),
-                      child: _buildConnectionStatus(),
-                    ), // ✅ unified header
-                    Expanded(
-                      child: SingleChildScrollView(
-                        padding: EdgeInsets.symmetric(horizontal: 20.w),
-                        child: Column(
-                          children: [
-                            SizedBox(height: 20.h),
-                            _buildConnectionCard(theme),
-                            SizedBox(height: 20.h),
-                            _buildSensitivityCard(theme),
-                            SizedBox(height: 20.h),
-                            _buildTouchpadCard(theme),
-                            SizedBox(height: 20.h),
-                            _buildControlButtons(theme),
-                            SizedBox(height: 40.h),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
-                )
-              : _pages[_currentIndex],
-        ),
-      ),
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _currentIndex,
-        onTap: (index) => setState(() => _currentIndex = index),
-        type: BottomNavigationBarType.fixed,
-        selectedItemColor: theme.colorScheme.primary,
-        unselectedItemColor: theme.colorScheme.onSurface.withOpacity(0.6),
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.mouse),
-            label: 'Mouse',
           ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.keyboard),
-            label: 'Keyboard',
+
+          // Glassmorphic Bottom Navigation Bar
+          Positioned(
+            bottom: 24.h,
+            left: 0,
+            right: 0,
+            child: AnimatedBuilder(
+              animation: _animation,
+              builder: (context, child) {
+                return Transform.translate(
+                  offset: Offset(
+                    0,
+                    (1 - _animation.value) * 100,
+                  ), // Slide down when hiding
+                  child: Opacity(
+                    opacity: _animation.value,
+                    child: _buildGlassBottomNav(theme),
+                  ),
+                );
+              },
+            ),
           ),
         ],
       ),
     );
   }
 
+  Widget _buildGlassBottomNav(ThemeData theme) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(30.r),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
+        child: Container(
+          margin: EdgeInsets.symmetric(horizontal: 16.w),
+          padding: EdgeInsets.symmetric(horizontal: 12.w),
+          height:
+              60.h, 
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(
+                0.08), 
+            borderRadius: BorderRadius.circular(30.r),
+            border: Border.all(
+                color: const Color.fromARGB(255, 44, 44, 44)
+                    .withOpacity(0.2)), 
+            boxShadow: [
+              BoxShadow(
+                color:
+                    const Color.fromARGB(255, 211, 211, 211).withOpacity(0.1),
+                blurRadius: 10.r,
+                offset: Offset(0, 4.h),
+              ),
+            ],
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              _buildNavItem(
+                image: 'assets/click.png',
+                label: 'Mouse',
+                index: 0,
+                theme: theme,
+              ),
+              _buildNavItem(
+                image: 'assets/keyboard.png',
+                label: 'Keyboard',
+                index: 1,
+                theme: theme,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildNavItem({
+    required String image,
+    required String label,
+    required int index,
+    required ThemeData theme,
+  }) {
+    final bool isSelected = _currentIndex == index;
+
+    return TweenAnimationBuilder<double>(
+      tween: Tween<double>(
+          begin: 1.0,
+          end: isSelected
+              ? 1.25
+              : 1.0), 
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeOutBack,
+      builder: (context, scale, child) {
+        return GestureDetector(
+          onTap: () {
+            setState(() => _currentIndex = index);
+            _showNavBar();
+            HapticFeedback.lightImpact();
+          },
+          child: Transform.scale(
+            scale: scale,
+            child: Image.asset(
+              image,
+              color: isSelected
+                  ? theme.colorScheme.primary
+                  : theme.colorScheme.onSurface.withOpacity(0.6),
+              width: 26
+                  .sp, 
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   Widget _buildMousePage() {
-    return const SizedBox(); // Main build handles page
+    return const SizedBox(); 
   }
 
   Widget _buildConnectionStatus() {

@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/material.dart';
 import 'package:mouser/keyboard/data/models/keyboard_request.dart';
 import 'package:mouser/keyboard/data/models/keyboard_response.dart';
 import 'package:mouser/keyboard/data/service/keyboard_service.dart';
@@ -25,7 +26,7 @@ class KeyboardRepository {
     dio.interceptors.add(LogInterceptor(
       requestBody: true,
       responseBody: true,
-      logPrint: (obj) => print('DIO: $obj'),
+      logPrint: (obj) => debugPrint('DIO: $obj'),
     ));
 
     return dio;
@@ -37,10 +38,10 @@ class KeyboardRepository {
         action: 'type',
         data: KeyboardData(text: text),
       );
-      print('Sending text request: ${request.toJson()}');
+      debugPrint('Sending text request: ${request.toJson()}');
       return await _service.sendKeyboardCommand(request);
     } catch (e) {
-      print('Error in sendText: $e');
+      debugPrint('Error in sendText: $e');
       rethrow;
     }
   }
@@ -57,10 +58,10 @@ class KeyboardRepository {
           alt: alt,
         ),
       );
-      print('Sending key request: ${request.toJson()}');
+      debugPrint('Sending key request: ${request.toJson()}');
       return await _service.sendKeyboardCommand(request);
     } catch (e) {
-      print('Error in sendKey: $e');
+      debugPrint('Error in sendKey: $e');
       rethrow;
     }
   }
@@ -102,10 +103,10 @@ class KeyboardRepository {
       final requestJson = request.toJson();
       requestJson['data'] = {'keys': keys};
       
-      print('Sending key combination: $requestJson');
+      debugPrint('Sending key combination: $requestJson');
       return await _service.sendKeyboardCommand(request);
     } catch (e) {
-      print('Error in sendKeyCombo: $e');
+      debugPrint('Error in sendKeyCombo: $e');
       rethrow;
     }
   }
