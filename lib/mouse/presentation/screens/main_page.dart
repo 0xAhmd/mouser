@@ -742,10 +742,12 @@ class _MouserScreenState extends State<MouserScreen>
                 children: [
                   Expanded(
                     child: ControlButton(
-                      icon: Icons.keyboard_double_arrow_up,
-                      label: 'Double Click',
+                      icon: Icons.keyboard_double_arrow_down,
+                      label: 'Scroll Down',
                       onPressed: connectionState.isConnected
-                          ? () => context.read<MouseCubit>().sendDoubleClick()
+                          ? () => context
+                              .read<MouseCubit>()
+                              .sendScrollCommand('scroll_down')
                           : null,
                       color: theme.colorScheme.tertiary,
                     ),

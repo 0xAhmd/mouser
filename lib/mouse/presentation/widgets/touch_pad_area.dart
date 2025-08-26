@@ -144,49 +144,67 @@ class _TouchpadAreaState extends State<TouchpadArea> {
   void _handleLongPressStart(LongPressStartDetails details) {
     if (!widget.isConnected) return;
 
-    // Start text selection mode
-    setState(() {
-      _isTextSelecting = true;
-      _textSelectionStart = details.localPosition;
-    });
+    // Only start text selection if we have exactly 1 finger
+    if (_pointerCount == 1) {
+      // Start text selection mode
+      setState(() {
+        _isTextSelecting = true;
+        _textSelectionStart = details.localPosition;
+      });
 
-    // Start drag selection
-    widget.onDragStart();
+      // Start drag selection with finger count info
+      widget.onDragStart();
+    } else {
+      // Ignore long press for multi-finger gestures
+      debugPrint(
+          'Long press ignored - $_pointerCount fingers detected, text selection only works with 1 finger');
+    }
   }
 
   void _handleLongPressMoveUpdate(LongPressMoveUpdateDetails details) {
     if (!widget.isConnected || !_isTextSelecting) return;
 
-    // Continue drag selection
-    if (_textSelectionStart != null) {
-      final deltaX = details.localPosition.dx - _textSelectionStart!.dx;
-      final deltaY = details.localPosition.dy - _textSelectionStart!.dy;
+    // Only continue if we still have 1 finger and we're in text selection mode
+    if (_pointerCount == 1) {
+      // Continue drag selection
+      if (_textSelectionStart != null) {
+        final deltaX = details.localPosition.dx - _textSelectionStart!.dx;
+        final deltaY = details.localPosition.dy - _textSelectionStart!.dy;
 
-      widget.onPanUpdate(DragUpdateDetails(
-        delta:
-            Offset(deltaX / 5.0, deltaY / 5.0), // Slower movement for precision
-        localPosition: details.localPosition,
-        globalPosition: details.globalPosition,
-      ));
+        widget.onPanUpdate(DragUpdateDetails(
+          delta: Offset(
+              deltaX / 5.0, deltaY / 5.0), // Slower movement for precision
+          localPosition: details.localPosition,
+          globalPosition: details.globalPosition,
+        ));
+      }
+    } else {
+      // Cancel text selection if finger count changed
+      _handleLongPressEnd(const LongPressEndDetails());
     }
   }
 
   void _handleLongPressEnd(LongPressEndDetails details) {
     if (!widget.isConnected) return;
 
-    setState(() {
-      _isTextSelecting = false;
-      _textSelectionStart = null;
-    });
+    if (_isTextSelecting) {
+      setState(() {
+        _isTextSelecting = false;
+        _textSelectionStart = null;
+      });
 
-    widget.onDragEnd();
+      widget.onDragEnd();
+    }
   }
 
+// Also update your gesture hint method:
   String _getGestureHint() {
     if (_pointerCount == 0) {
-      return 'Tap to click • Drag to move • Long press to select';
+      return 'Tap to click • Drag to move • Long press (1 finger) to select text';
     } else if (_pointerCount == 1) {
-      return _isTextSelecting ? 'Selecting text...' : 'Moving cursor...';
+      return _isTextSelecting
+          ? 'Selecting text... (1 finger only)'
+          : 'Moving cursor...';
     } else if (_pointerCount == 2) {
       return 'Two fingers: Scroll • Pinch to zoom • Tap for right-click';
     } else {

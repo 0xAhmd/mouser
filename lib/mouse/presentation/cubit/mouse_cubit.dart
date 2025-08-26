@@ -128,13 +128,50 @@ class MouseCubit extends Cubit<MouseState> {
   void sendTwoFingerScroll(double deltaY) {
     // Convert deltaY to scroll commands
     final scrollAmount = deltaY * state.scrollSensitivity;
-    final scrollDirection = scrollAmount > 0 ? 'scroll_up' : 'scroll_down';
 
-    // Send multiple scroll events for smooth scrolling
-    final scrollCount = (scrollAmount.abs() * 3).round().clamp(1, 5);
+    // Use the new gesture endpoint for better handling
+    sendGestureCommand('two_finger_scroll', data: {
+      'deltaY': scrollAmount,
+      'sensitivity': state.scrollSensitivity,
+    });
+  }
 
-    for (int i = 0; i < scrollCount; i++) {
-      sendMouseCommand(scrollDirection);
+  Future<void> sendGestureCommand(
+    String gestureType, {
+    Map<String, dynamic>? data,
+  }) async {
+    if (!connectionCubit.state.isConnected) return;
+
+    try {
+      final client = http.Client();
+      final response = await client
+          .post(
+            Uri.parse(
+                'http://${connectionCubit.state.serverIP}:${connectionCubit.state.serverPort}/gesture'),
+            headers: {
+              'Content-Type': 'application/json',
+              'Accept': 'application/json',
+              'Connection': 'keep-alive',
+            },
+            body: json.encode({'type': gestureType, 'data': data ?? {}}),
+          )
+          .timeout(const Duration(milliseconds: 500));
+
+      client.close();
+
+      if (response.statusCode == 200) {
+        emit(state.copyWith(
+          lastCommand: 'gesture_$gestureType',
+          errorMessage: null,
+        ));
+      } else {
+        debugPrint('Failed to send gesture command: ${response.statusCode}');
+      }
+    } catch (e) {
+      debugPrint('Error sending gesture command: $e');
+      emit(state.copyWith(
+        errorMessage: 'Gesture command failed: $e',
+      ));
     }
   }
 
@@ -168,10 +205,18 @@ class MouseCubit extends Cubit<MouseState> {
     sendMouseCommand('double_click');
   }
 
-  void startTextSelection() {
-    // Start drag selection
-    sendMouseCommand('drag_start');
-    emit(state.copyWith(isTextSelecting: true));
+  void startTextSelection({int fingerCount = 1}) {
+    // Only start text selection for single finger
+    if (fingerCount == 1) {
+      sendMouseCommand('drag_start', data: {
+        'selection_mode': true,
+        'finger_count': fingerCount,
+      });
+      emit(state.copyWith(isTextSelecting: true));
+    } else {
+      debugPrint(
+          'Text selection ignored for $fingerCount fingers - only works with 1 finger');
+    }
   }
 
   void endTextSelection() {
@@ -180,15 +225,18 @@ class MouseCubit extends Cubit<MouseState> {
     emit(state.copyWith(isTextSelecting: false));
   }
 
-  void sendTextSelectionMove(double dx, double dy) {
-    // Send precise movement for text selection
-    sendMouseCommand(
-      'move',
-      data: {
-        'dx': dx * state.sensitivity * 0.3, // Slower movement for precision
-        'dy': dy * state.sensitivity * 0.3,
-      },
-    );
+  void sendTextSelectionMove(double dx, double dy, {int fingerCount = 1}) {
+    // Only send text selection moves for single finger
+    if (fingerCount == 1) {
+      sendMouseCommand(
+        'move',
+        data: {
+          'dx': dx * state.sensitivity * 0.3, // Slower movement for precision
+          'dy': dy * state.sensitivity * 0.3,
+          'finger_count': fingerCount,
+        },
+      );
+    }
   }
 
   // Additional keyboard shortcuts for advanced text selection
