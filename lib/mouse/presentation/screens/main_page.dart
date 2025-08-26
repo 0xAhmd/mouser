@@ -134,14 +134,11 @@ class _MouserScreenState extends State<MouserScreen>
               ],
               child: NotificationListener<ScrollNotification>(
                 onNotification: (ScrollNotification scrollInfo) {
-                  // Only handle UserScrollNotification for user-initiated scrolls
                   if (scrollInfo is UserScrollNotification) {
                     if (scrollInfo.direction == ScrollDirection.forward) {
-                      // Scrolling up - show nav bar
                       _showNavBar();
                     } else if (scrollInfo.direction ==
                         ScrollDirection.reverse) {
-                      // Scrolling down - hide nav bar
                       _hideNavBar();
                     }
                   }
@@ -167,9 +164,9 @@ class _MouserScreenState extends State<MouserScreen>
                                   _buildTouchpadCard(theme),
                                   SizedBox(height: 20.h),
                                   _buildControlButtons(theme),
-                                  SizedBox(
-                                      height: 80
-                                          .h), // Modified - reduced from 100.h for smaller nav bar
+                                  SizedBox(height: 20.h),
+                                  _buildAdvancedGesturesCard(theme),
+                                  SizedBox(height: 80.h),
                                 ],
                               ),
                             ),
@@ -190,10 +187,7 @@ class _MouserScreenState extends State<MouserScreen>
               animation: _animation,
               builder: (context, child) {
                 return Transform.translate(
-                  offset: Offset(
-                    0,
-                    (1 - _animation.value) * 100,
-                  ), // Slide down when hiding
+                  offset: Offset(0, (1 - _animation.value) * 100),
                   child: Opacity(
                     opacity: _animation.value,
                     child: _buildGlassBottomNav(theme),
@@ -215,15 +209,12 @@ class _MouserScreenState extends State<MouserScreen>
         child: Container(
           margin: EdgeInsets.symmetric(horizontal: 16.w),
           padding: EdgeInsets.symmetric(horizontal: 12.w),
-          height:
-              60.h, 
+          height: 60.h,
           decoration: BoxDecoration(
-            color: Colors.white.withOpacity(
-                0.08), 
+            color: Colors.white.withOpacity(0.08),
             borderRadius: BorderRadius.circular(30.r),
             border: Border.all(
-                color: const Color.fromARGB(255, 44, 44, 44)
-                    .withOpacity(0.2)), 
+                color: const Color.fromARGB(255, 44, 44, 44).withOpacity(0.2)),
             boxShadow: [
               BoxShadow(
                 color:
@@ -264,11 +255,7 @@ class _MouserScreenState extends State<MouserScreen>
     final bool isSelected = _currentIndex == index;
 
     return TweenAnimationBuilder<double>(
-      tween: Tween<double>(
-          begin: 1.0,
-          end: isSelected
-              ? 1.25
-              : 1.0), 
+      tween: Tween<double>(begin: 1.0, end: isSelected ? 1.25 : 1.0),
       duration: const Duration(milliseconds: 300),
       curve: Curves.easeOutBack,
       builder: (context, scale, child) {
@@ -285,8 +272,16 @@ class _MouserScreenState extends State<MouserScreen>
               color: isSelected
                   ? theme.colorScheme.primary
                   : theme.colorScheme.onSurface.withOpacity(0.6),
-              width: 26
-                  .sp, 
+              width: 26.sp,
+              errorBuilder: (context, error, stackTrace) {
+                return Icon(
+                  isSelected ? Icons.mouse : Icons.keyboard,
+                  color: isSelected
+                      ? theme.colorScheme.primary
+                      : theme.colorScheme.onSurface.withOpacity(0.6),
+                  size: 26.sp,
+                );
+              },
             ),
           ),
         );
@@ -295,7 +290,7 @@ class _MouserScreenState extends State<MouserScreen>
   }
 
   Widget _buildMousePage() {
-    return const SizedBox(); 
+    return const SizedBox();
   }
 
   Widget _buildConnectionStatus() {
@@ -435,53 +430,195 @@ class _MouserScreenState extends State<MouserScreen>
                       color: theme.colorScheme.primary, size: 24.sp),
                   SizedBox(width: 8.w),
                   Text(
-                    'Sensitivity',
+                    'Gesture Sensitivity',
                     style: TextStyle(
                       fontWeight: FontWeight.w600,
                       fontSize: 18.sp,
                     ),
                   ),
-                  const Spacer(),
-                  Container(
-                    padding:
-                        EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.primary.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(20.r),
-                    ),
-                    child: Text(
-                      mouseState.sensitivity.toStringAsFixed(1),
-                      style: TextStyle(
-                        color: theme.colorScheme.primary,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 14.sp,
-                      ),
-                    ),
+                ],
+              ),
+              SizedBox(height: 16.h),
+
+              // Gesture sensitivity presets
+              Row(
+                children: [
+                  Expanded(
+                    child: _buildSensitivityPreset(
+                        'Low', 'low', mouseState, theme),
+                  ),
+                  SizedBox(width: 8.w),
+                  Expanded(
+                    child: _buildSensitivityPreset(
+                        'Medium', 'medium', mouseState, theme),
+                  ),
+                  SizedBox(width: 8.w),
+                  Expanded(
+                    child: _buildSensitivityPreset(
+                        'High', 'high', mouseState, theme),
                   ),
                 ],
               ),
-              SizedBox(height: 12.h),
-              SliderTheme(
-                data: SliderTheme.of(context).copyWith(
-                  trackHeight: 6.h,
-                  thumbShape: RoundSliderThumbShape(enabledThumbRadius: 12.r),
-                  overlayShape: RoundSliderOverlayShape(overlayRadius: 20.r),
-                ),
-                child: Slider(
-                  value: mouseState.sensitivity,
-                  min: 0.1,
-                  max: 3.0,
-                  divisions: 29,
-                  onChanged: (value) {
-                    context.read<MouseCubit>().updateSensitivity(value);
-                    HapticFeedback.selectionClick();
-                  },
-                ),
+
+              SizedBox(height: 20.h),
+
+              // Mouse sensitivity
+              _buildSensitivitySlider(
+                'Mouse',
+                mouseState.sensitivity,
+                0.1,
+                3.0,
+                (value) => context.read<MouseCubit>().updateSensitivity(value),
+                theme,
+                Icons.mouse,
+              ),
+
+              SizedBox(height: 16.h),
+
+              // Scroll sensitivity
+              _buildSensitivitySlider(
+                'Scroll',
+                mouseState.scrollSensitivity,
+                0.1,
+                1.0,
+                (value) =>
+                    context.read<MouseCubit>().updateScrollSensitivity(value),
+                theme,
+                Icons.swap_vert,
+              ),
+
+              SizedBox(height: 16.h),
+
+              // Zoom sensitivity
+              _buildSensitivitySlider(
+                'Zoom',
+                mouseState.zoomSensitivity,
+                0.1,
+                1.0,
+                (value) =>
+                    context.read<MouseCubit>().updateZoomSensitivity(value),
+                theme,
+                Icons.zoom_in,
               ),
             ],
           ),
         );
       },
+    );
+  }
+
+  Widget _buildSensitivityPreset(
+      String label, String preset, MouseState mouseState, ThemeData theme) {
+    final isSelected = _getSelectedPreset(mouseState) == preset;
+
+    return GestureDetector(
+      onTap: () {
+        context.read<MouseCubit>().setGestureSensitivity(preset);
+        HapticFeedback.selectionClick();
+      },
+      child: Container(
+        padding: EdgeInsets.symmetric(vertical: 8.h, horizontal: 12.w),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? theme.colorScheme.primary.withOpacity(0.2)
+              : theme.colorScheme.surfaceVariant.withOpacity(0.3),
+          borderRadius: BorderRadius.circular(8.r),
+          border: Border.all(
+            color: isSelected ? theme.colorScheme.primary : Colors.transparent,
+            width: 1.0,
+          ),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 12.sp,
+            fontWeight: FontWeight.w600,
+            color: isSelected
+                ? theme.colorScheme.primary
+                : theme.colorScheme.onSurface.withOpacity(0.7),
+          ),
+          textAlign: TextAlign.center,
+        ),
+      ),
+    );
+  }
+
+  String _getSelectedPreset(MouseState mouseState) {
+    if (mouseState.sensitivity == 0.5 &&
+        mouseState.scrollSensitivity == 0.3 &&
+        mouseState.zoomSensitivity == 0.2) {
+      return 'low';
+    } else if (mouseState.sensitivity == 1.0 &&
+        mouseState.scrollSensitivity == 0.5 &&
+        mouseState.zoomSensitivity == 0.3) {
+      return 'medium';
+    } else if (mouseState.sensitivity == 1.8 &&
+        mouseState.scrollSensitivity == 0.8 &&
+        mouseState.zoomSensitivity == 0.5) {
+      return 'high';
+    }
+    return 'custom';
+  }
+
+  Widget _buildSensitivitySlider(
+    String label,
+    double value,
+    double min,
+    double max,
+    Function(double) onChanged,
+    ThemeData theme,
+    IconData icon,
+  ) {
+    return Column(
+      children: [
+        Row(
+          children: [
+            Icon(icon, color: theme.colorScheme.primary, size: 16.sp),
+            SizedBox(width: 8.w),
+            Text(
+              label,
+              style: TextStyle(
+                fontWeight: FontWeight.w500,
+                fontSize: 14.sp,
+              ),
+            ),
+            const Spacer(),
+            Container(
+              padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+              decoration: BoxDecoration(
+                color: theme.colorScheme.primary.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(12.r),
+              ),
+              child: Text(
+                value.toStringAsFixed(1),
+                style: TextStyle(
+                  color: theme.colorScheme.primary,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 12.sp,
+                ),
+              ),
+            ),
+          ],
+        ),
+        SizedBox(height: 8.h),
+        SliderTheme(
+          data: SliderTheme.of(context).copyWith(
+            trackHeight: 4.h,
+            thumbShape: RoundSliderThumbShape(enabledThumbRadius: 8.r),
+            overlayShape: RoundSliderOverlayShape(overlayRadius: 16.r),
+          ),
+          child: Slider(
+            value: value,
+            min: min,
+            max: max,
+            divisions: ((max - min) * 10).round(),
+            onChanged: (newValue) {
+              onChanged(newValue);
+              HapticFeedback.selectionClick();
+            },
+          ),
+        ),
+      ],
     );
   }
 
@@ -491,7 +628,7 @@ class _MouserScreenState extends State<MouserScreen>
         return GlassCard(
           padding: EdgeInsets.zero,
           child: Container(
-            height: 300.h,
+            height: 350.h, // Increased height for enhanced touchpad
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(20.r),
               gradient: LinearGradient(
@@ -516,6 +653,36 @@ class _MouserScreenState extends State<MouserScreen>
               onTap: () {
                 if (connectionState.isConnected) {
                   context.read<MouseCubit>().sendClickCommand('left_click');
+                  HapticFeedback.lightImpact();
+                }
+              },
+              onScroll: (deltaY) {
+                if (connectionState.isConnected) {
+                  context.read<MouseCubit>().sendTwoFingerScroll(deltaY);
+                  HapticFeedback.selectionClick();
+                }
+              },
+              onZoom: (scaleDelta) {
+                if (connectionState.isConnected) {
+                  context.read<MouseCubit>().sendPinchZoom(scaleDelta);
+                  HapticFeedback.lightImpact();
+                }
+              },
+              onRightClick: () {
+                if (connectionState.isConnected) {
+                  context.read<MouseCubit>().sendRightClick();
+                  HapticFeedback.mediumImpact();
+                }
+              },
+              onDragStart: () {
+                if (connectionState.isConnected) {
+                  context.read<MouseCubit>().startTextSelection();
+                  HapticFeedback.heavyImpact();
+                }
+              },
+              onDragEnd: () {
+                if (connectionState.isConnected) {
+                  context.read<MouseCubit>().endTextSelection();
                   HapticFeedback.lightImpact();
                 }
               },
@@ -575,12 +742,10 @@ class _MouserScreenState extends State<MouserScreen>
                 children: [
                   Expanded(
                     child: ControlButton(
-                      icon: Icons.keyboard_arrow_up,
-                      label: 'Scroll Up',
+                      icon: Icons.keyboard_double_arrow_up,
+                      label: 'Double Click',
                       onPressed: connectionState.isConnected
-                          ? () => context
-                              .read<MouseCubit>()
-                              .sendScrollCommand('scroll_up')
+                          ? () => context.read<MouseCubit>().sendDoubleClick()
                           : null,
                       color: theme.colorScheme.tertiary,
                     ),
@@ -588,14 +753,128 @@ class _MouserScreenState extends State<MouserScreen>
                   SizedBox(width: 12.w),
                   Expanded(
                     child: ControlButton(
-                      icon: Icons.keyboard_arrow_down,
-                      label: 'Scroll Down',
+                      icon: Icons.keyboard_arrow_up,
+                      label: 'Scroll Up',
                       onPressed: connectionState.isConnected
                           ? () => context
                               .read<MouseCubit>()
-                              .sendScrollCommand('scroll_down')
+                              .sendScrollCommand('scroll_up')
                           : null,
-                      color: theme.colorScheme.error,
+                      color: Colors.green,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildAdvancedGesturesCard(ThemeData theme) {
+    return BlocBuilder<ConnectionCubit, ConnectionState>(
+      builder: (context, connectionState) {
+        return GlassCard(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(Icons.gesture,
+                      color: theme.colorScheme.primary, size: 24.sp),
+                  SizedBox(width: 8.w),
+                  Text(
+                    'Advanced Shortcuts',
+                    style: TextStyle(
+                      fontSize: 18.sp,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+              SizedBox(height: 16.h),
+
+              // Text manipulation shortcuts
+              Row(
+                children: [
+                  Expanded(
+                    child: ControlButton(
+                      icon: Icons.content_copy,
+                      label: 'Copy',
+                      onPressed: connectionState.isConnected
+                          ? () => context.read<MouseCubit>().copy()
+                          : null,
+                      color: Colors.blue,
+                    ),
+                  ),
+                  SizedBox(width: 12.w),
+                  Expanded(
+                    child: ControlButton(
+                      icon: Icons.content_paste,
+                      label: 'Paste',
+                      onPressed: connectionState.isConnected
+                          ? () => context.read<MouseCubit>().paste()
+                          : null,
+                      color: Colors.green,
+                    ),
+                  ),
+                ],
+              ),
+
+              SizedBox(height: 12.h),
+
+              // Zoom controls
+              Row(
+                children: [
+                  Expanded(
+                    child: ControlButton(
+                      icon: Icons.zoom_in,
+                      label: 'Zoom In',
+                      onPressed: connectionState.isConnected
+                          ? () => context.read<MouseCubit>().zoomIn()
+                          : null,
+                      color: Colors.purple,
+                    ),
+                  ),
+                  SizedBox(width: 12.w),
+                  Expanded(
+                    child: ControlButton(
+                      icon: Icons.zoom_out,
+                      label: 'Zoom Out',
+                      onPressed: connectionState.isConnected
+                          ? () => context.read<MouseCubit>().zoomOut()
+                          : null,
+                      color: Colors.orange,
+                    ),
+                  ),
+                ],
+              ),
+
+              SizedBox(height: 12.h),
+
+              // Additional shortcuts
+              Row(
+                children: [
+                  Expanded(
+                    child: ControlButton(
+                      icon: Icons.select_all,
+                      label: 'Select All',
+                      onPressed: connectionState.isConnected
+                          ? () => context.read<MouseCubit>().selectAll()
+                          : null,
+                      color: Colors.teal,
+                    ),
+                  ),
+                  SizedBox(width: 12.w),
+                  Expanded(
+                    child: ControlButton(
+                      icon: Icons.undo,
+                      label: 'Undo',
+                      onPressed: connectionState.isConnected
+                          ? () => context.read<MouseCubit>().undo()
+                          : null,
+                      color: Colors.red,
                     ),
                   ),
                 ],
