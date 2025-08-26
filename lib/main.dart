@@ -12,7 +12,7 @@ void main() {
 
 class Mouser extends StatelessWidget {
   const Mouser({super.key});
-
+  
   @override
   Widget build(BuildContext context) {
     return MultiBlocProvider(
@@ -30,7 +30,7 @@ class Mouser extends StatelessWidget {
         ),
       ],
       child: ScreenUtilInit(
-        designSize: const Size(375, 812), // iPhone 11 Pro design size
+        designSize: const Size(375, 812), 
         minTextAdapt: true,
         splitScreenMode: true,
         useInheritedMediaQuery: true,
