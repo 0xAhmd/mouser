@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter/foundation.dart';
 import 'package:dio/dio.dart';
+import 'package:http/http.dart' as http;
 import 'package:mouser/file_transfer/data/models/directory_info.dart';
 import 'package:mouser/file_transfer/data/models/file_transfer_response.dart';
 import 'package:mouser/file_transfer/data/repo/file_transfer_repo.dart';
@@ -442,6 +443,23 @@ class FileTransferCubit extends Cubit<FileTransferState> {
     } catch (e) {
       debugPrint('❌ Connection test error: $e');
       return false;
+    }
+  }
+
+  Future<void> debugConnection() async {
+    print('=== DEBUG CONNECTION ===');
+    print('Base URL: ${_repository?.baseUrl}');
+    print('Connection State: ${state.isConnected}');
+
+    try {
+      final response = await http.get(
+        Uri.parse(
+            '${_connectionCubit.state.serverIP}:${_connectionCubit.state.serverPort}/file-transfer/status'),
+      );
+      print('Direct HTTP Status: ${response.statusCode}');
+      print('Direct HTTP Body: ${response.body}');
+    } catch (e) {
+      print('Direct HTTP Error: $e');
     }
   }
 }

@@ -10,11 +10,10 @@ import 'package:mouser/file_transfer/data/service/file_transfer_service.dart';
 
 class FileTransferRepository {
   final FileTransferService _service;
-  final String _baseUrl;
+  final String baseUrl;
 
-  FileTransferRepository({required String baseUrl})
-      : _baseUrl = baseUrl,
-        _service = FileTransferService(_createDio(baseUrl));
+  FileTransferRepository({required this.baseUrl})
+      : _service = FileTransferService(_createDio(baseUrl));
 
   static Dio _createDio(String baseUrl) {
     final dio = Dio(BaseOptions(
@@ -124,7 +123,7 @@ class FileTransferRepository {
   // Add connection test method
   Future<bool> testConnection() async {
     try {
-      debugPrint('🔄 Testing connection to $_baseUrl');
+      debugPrint('🔄 Testing connection to $baseUrl');
       await _service.getTransferStatus();
       debugPrint('✅ Connection test successful');
       return true;
@@ -142,7 +141,7 @@ class FileTransferRepository {
     try {
       debugPrint('🚀 Starting upload of ${files.length} files');
       debugPrint('📁 Target directory: $targetDirectory');
-      debugPrint('🔗 Base URL: $_baseUrl');
+      debugPrint('🔗 Base URL: $baseUrl');
 
       // Test connection first
       final isConnected = await testConnection();
@@ -195,7 +194,7 @@ class FileTransferRepository {
 
   Future<DirectoriesResponse> getAvailableDirectories() async {
     try {
-      debugPrint('📂 Fetching available directories from $_baseUrl');
+      debugPrint('📂 Fetching available directories from $baseUrl');
 
       // Test connection first
       final isConnected = await testConnection();
@@ -231,7 +230,7 @@ class FileTransferRepository {
 
   Future<TransferStatus> getTransferStatus() async {
     try {
-      debugPrint('ℹ️ Fetching transfer status from $_baseUrl');
+      debugPrint('ℹ️ Fetching transfer status from $baseUrl');
       final response = await _service.getTransferStatus();
       debugPrint('✅ Transfer status: ${response.status}');
       debugPrint('🔧 Supported features: ${response.features}');

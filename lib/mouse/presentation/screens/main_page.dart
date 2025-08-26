@@ -1,4 +1,3 @@
-// lib/mouse/presentation/screens/main_page.dart
 import 'dart:ui';
 import 'package:flutter/material.dart' hide ConnectionState;
 import 'package:flutter/rendering.dart';
