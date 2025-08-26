@@ -26,11 +26,16 @@ android {
         versionName = flutter.versionName
     }
 
-    buildTypes {
-        getByName("release") {
-            signingConfig = signingConfigs.getByName("debug")
-        }
+buildTypes {
+    getByName("release") {
+        isMinifyEnabled = false
+        isShrinkResources = false   // ✅ must explicitly disable
+        signingConfig = signingConfigs.getByName("debug")
     }
+}
+
+
+
 }
 
 flutter {
