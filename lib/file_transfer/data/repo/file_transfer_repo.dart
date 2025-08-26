@@ -10,52 +10,128 @@ import 'package:mouser/file_transfer/data/service/file_transfer_service.dart';
 
 class FileTransferRepository {
   final FileTransferService _service;
+  final String _baseUrl;
 
   FileTransferRepository({required String baseUrl})
-      : _service = FileTransferService(_createDio(baseUrl));
+      : _baseUrl = baseUrl,
+        _service = FileTransferService(_createDio(baseUrl));
 
   static Dio _createDio(String baseUrl) {
     final dio = Dio(BaseOptions(
       baseUrl: baseUrl,
-      connectTimeout: const Duration(seconds: 30), // Longer timeout for file uploads
+      connectTimeout: const Duration(seconds: 30),
       receiveTimeout: const Duration(seconds: 60),
       sendTimeout: const Duration(seconds: 60),
       headers: {
         'Accept': 'application/json',
       },
+      // Add validateStatus to handle HTTP errors more gracefully
+      validateStatus: (status) {
+        // Accept all status codes for custom error handling
+        return status != null && status < 500;
+      },
     ));
 
-    // Add logging interceptor for debugging
+    // Enhanced logging interceptor
     dio.interceptors.add(LogInterceptor(
       requestBody: true,
       responseBody: true,
       logPrint: (obj) => debugPrint('FILE_TRANSFER DIO: $obj'),
+      error: true,
+      requestHeader: true,
+      responseHeader: false,
     ));
 
-    // Add progress interceptor for upload tracking
+    // Enhanced error handling interceptor
     dio.interceptors.add(
       InterceptorsWrapper(
         onRequest: (options, handler) {
-          debugPrint('Uploading to: ${options.uri}');
+          debugPrint('🚀 REQUEST: ${options.method} ${options.uri}');
           if (options.data is FormData) {
             final formData = options.data as FormData;
-            debugPrint('Form data fields: ${formData.fields.length}');
-            debugPrint('Form data files: ${formData.files.length}');
+            debugPrint('📁 Form data fields: ${formData.fields.length}');
+            debugPrint('📄 Form data files: ${formData.files.length}');
           }
           handler.next(options);
         },
         onResponse: (response, handler) {
-          debugPrint('Upload response status: ${response.statusCode}');
+          debugPrint(
+              '✅ RESPONSE: ${response.statusCode} - ${response.statusMessage}');
           handler.next(response);
         },
         onError: (error, handler) {
-          debugPrint('Upload error: ${error.message}');
-          handler.next(error);
+          debugPrint('❌ ERROR: ${error.type} - ${error.message}');
+          debugPrint(
+              '🔍 ERROR DETAILS: ${error.response?.statusCode} ${error.response?.statusMessage}');
+          debugPrint('🔍 ERROR DATA: ${error.response?.data}');
+
+          // Create custom error with more context
+          final customError = DioException(
+            requestOptions: error.requestOptions,
+            response: error.response,
+            type: error.type,
+            error: _createUserFriendlyError(error),
+            message: _createUserFriendlyErrorMessage(error),
+          );
+
+          handler.next(customError);
         },
       ),
     );
 
     return dio;
+  }
+
+  static String _createUserFriendlyError(DioException error) {
+    switch (error.type) {
+      case DioExceptionType.connectionTimeout:
+        return 'Connection timeout. Check your network and server status.';
+      case DioExceptionType.sendTimeout:
+        return 'Upload timeout. Files may be too large or connection is slow.';
+      case DioExceptionType.receiveTimeout:
+        return 'Response timeout. Server is taking too long to respond.';
+      case DioExceptionType.badResponse:
+        final statusCode = error.response?.statusCode;
+        switch (statusCode) {
+          case 404:
+            return 'Server endpoint not found. Make sure the file transfer server is running correctly.';
+          case 403:
+            return 'Access forbidden. Check server permissions.';
+          case 413:
+            return 'File too large. Reduce file size or check server limits.';
+          case 500:
+            return 'Server error. Check server logs for details.';
+          case 503:
+            return 'Server temporarily unavailable. Try again later.';
+          default:
+            return 'Server error (${statusCode}). ${error.response?.data?.toString() ?? ''}';
+        }
+      case DioExceptionType.connectionError:
+        return 'Cannot connect to server. Check network connection and server IP/port.';
+      case DioExceptionType.badCertificate:
+        return 'SSL certificate error. Check server certificate.';
+      case DioExceptionType.cancel:
+        return 'Request was cancelled.';
+      default:
+        return 'Network error: ${error.message}';
+    }
+  }
+
+  static String _createUserFriendlyErrorMessage(DioException error) {
+    return _createUserFriendlyError(error);
+  }
+
+  // Add connection test method
+  Future<bool> testConnection() async {
+    try {
+      debugPrint('🔄 Testing connection to $_baseUrl');
+      await _service.getTransferStatus();
+      debugPrint('✅ Connection test successful');
+      return true;
+    } catch (e) {
+      debugPrint('❌ Connection test failed: $e');
+      return false;
+    }
   }
 
   Future<FileTransferResponse> uploadFiles({
@@ -64,22 +140,31 @@ class FileTransferRepository {
     void Function(int sent, int total)? onProgress,
   }) async {
     try {
-      debugPrint('Starting upload of ${files.length} files');
-      debugPrint('Target directory: $targetDirectory');
+      debugPrint('🚀 Starting upload of ${files.length} files');
+      debugPrint('📁 Target directory: $targetDirectory');
+      debugPrint('🔗 Base URL: $_baseUrl');
+
+      // Test connection first
+      final isConnected = await testConnection();
+      if (!isConnected) {
+        throw Exception(
+            'Cannot connect to file transfer server. Please check server status and network connection.');
+      }
 
       final multipartFiles = <MultipartFile>[];
-      
+
       for (final file in files) {
         if (await file.exists()) {
           final fileName = file.path.split('/').last;
+          final fileSize = await file.length();
           final multipartFile = await MultipartFile.fromFile(
             file.path,
             filename: fileName,
           );
           multipartFiles.add(multipartFile);
-          debugPrint('Added file: $fileName (${await file.length()} bytes)');
+          debugPrint('📄 Added file: $fileName (${_formatFileSize(fileSize)})');
         } else {
-          debugPrint('File does not exist: ${file.path}');
+          debugPrint('⚠️ File does not exist: ${file.path}');
         }
       }
 
@@ -87,67 +172,85 @@ class FileTransferRepository {
         throw Exception('No valid files to upload');
       }
 
-      final response = await _service.uploadFiles(targetDirectory, multipartFiles);
-      debugPrint('Upload completed: ${response.status}');
-      debugPrint('Uploaded files: ${response.totalUploaded}');
-      debugPrint('Skipped files: ${response.totalSkipped}');
-      
+      debugPrint('📤 Uploading ${multipartFiles.length} files...');
+      final response =
+          await _service.uploadFiles(targetDirectory, multipartFiles);
+
+      debugPrint('✅ Upload completed: ${response.status}');
+      debugPrint('📈 Uploaded files: ${response.totalUploaded}');
+      debugPrint('⏭️ Skipped files: ${response.totalSkipped}');
+
       return response;
     } catch (e) {
-      debugPrint('Error in uploadFiles: $e');
+      debugPrint('❌ Error in uploadFiles: $e');
+      if (e is DioException) {
+        debugPrint('🔍 DioException type: ${e.type}');
+        debugPrint('🔍 DioException message: ${e.message}');
+        debugPrint('🔍 Response status: ${e.response?.statusCode}');
+        debugPrint('🔍 Response data: ${e.response?.data}');
+      }
       rethrow;
     }
   }
 
   Future<DirectoriesResponse> getAvailableDirectories() async {
     try {
-      debugPrint('Fetching available directories');
+      debugPrint('📂 Fetching available directories from $_baseUrl');
+
+      // Test connection first
+      final isConnected = await testConnection();
+      if (!isConnected) {
+        throw Exception(
+            'Cannot connect to file transfer server to fetch directories.');
+      }
+
       final response = await _service.getDirectories();
-      debugPrint('Found ${response.directories.length} directories');
+      debugPrint('✅ Found ${response.directories.length} directories');
       return response;
     } catch (e) {
-      debugPrint('Error fetching directories: $e');
+      debugPrint('❌ Error fetching directories: $e');
       rethrow;
     }
   }
 
   Future<FileTransferResponse> createDirectory(String path) async {
     try {
-      debugPrint('Creating directory: $path');
+      debugPrint('📁 Creating directory: $path');
       final request = FileTransferRequest(
         action: 'create_directory',
         data: FileTransferData(path: path),
       );
       final response = await _service.createDirectory(request);
-      debugPrint('Directory creation result: ${response.status}');
+      debugPrint('✅ Directory creation result: ${response.status}');
       return response;
     } catch (e) {
-      debugPrint('Error creating directory: $e');
+      debugPrint('❌ Error creating directory: $e');
       rethrow;
     }
   }
 
   Future<TransferStatus> getTransferStatus() async {
     try {
-      debugPrint('Fetching transfer status');
+      debugPrint('ℹ️ Fetching transfer status from $_baseUrl');
       final response = await _service.getTransferStatus();
-      debugPrint('Transfer status: ${response.status}');
-      debugPrint('Supported features: ${response.features}');
+      debugPrint('✅ Transfer status: ${response.status}');
+      debugPrint('🔧 Supported features: ${response.features}');
       return response;
     } catch (e) {
-      debugPrint('Error fetching transfer status: $e');
+      debugPrint('❌ Error fetching transfer status: $e');
       rethrow;
     }
   }
 
   Future<DiskSpaceInfo> getDiskSpace(String? directory) async {
     try {
-      debugPrint('Fetching disk space for: ${directory ?? 'default'}');
+      debugPrint('💾 Fetching disk space for: ${directory ?? 'default'}');
       final response = await _service.getDiskSpace(directory);
-      debugPrint('Free space: ${response.freeGb} GB / ${response.totalGb} GB');
+      debugPrint(
+          '✅ Free space: ${response.freeGb} GB / ${response.totalGb} GB');
       return response;
     } catch (e) {
-      debugPrint('Error fetching disk space: $e');
+      debugPrint('❌ Error fetching disk space: $e');
       rethrow;
     }
   }
@@ -161,28 +264,28 @@ class FileTransferRepository {
           totalSize += await file.length();
         }
       }
-      
-      debugPrint('Total file size: ${(totalSize / (1024 * 1024)).toStringAsFixed(2)} MB');
-      debugPrint('Max allowed size: ${(maxSizeBytes / (1024 * 1024)).toStringAsFixed(2)} MB');
-      
+
+      debugPrint('📊 Total file size: ${_formatFileSize(totalSize)}');
+      debugPrint('📏 Max allowed size: ${_formatFileSize(maxSizeBytes)}');
+
       return totalSize <= maxSizeBytes;
     } catch (e) {
-      debugPrint('Error checking file size: $e');
+      debugPrint('❌ Error checking file size: $e');
       return false;
     }
   }
 
   // Helper method to format file sizes
-  static String formatFileSize(int bytes) {
+  static String _formatFileSize(int bytes) {
     const units = ['B', 'KB', 'MB', 'GB'];
     double size = bytes.toDouble();
     int unitIndex = 0;
-    
+
     while (size >= 1024 && unitIndex < units.length - 1) {
       size /= 1024;
       unitIndex++;
     }
-    
+
     return '${size.toStringAsFixed(size < 10 ? 1 : 0)} ${units[unitIndex]}';
   }
 
@@ -192,14 +295,15 @@ class FileTransferRepository {
   }
 
   // Helper method to check if file type is allowed
-  static bool isFileTypeAllowed(String filePath, List<String> allowedExtensions) {
+  static bool isFileTypeAllowed(
+      String filePath, List<String> allowedExtensions) {
     final extension = getFileExtension(filePath);
     return allowedExtensions.contains(extension);
   }
 
   // Helper method to validate files before upload
   Future<Map<String, dynamic>> validateFiles(
-    List<File> files, 
+    List<File> files,
     List<String> allowedExtensions,
     int maxSizeBytes,
   ) async {
@@ -219,7 +323,7 @@ class FileTransferRepository {
 
         final size = await file.length();
         final extension = getFileExtension(file.path);
-        
+
         if (!allowedExtensions.contains(extension)) {
           invalidFiles.add({
             'file': file.path.split('/').last,
@@ -231,7 +335,7 @@ class FileTransferRepository {
         if (size > maxSizeBytes) {
           invalidFiles.add({
             'file': file.path.split('/').last,
-            'reason': 'File too large (${formatFileSize(size)})'
+            'reason': 'File too large (${_formatFileSize(size)})'
           });
           continue;
         }
@@ -250,7 +354,7 @@ class FileTransferRepository {
       'validFiles': validFiles,
       'invalidFiles': invalidFiles,
       'totalSize': totalSize,
-      'totalSizeFormatted': formatFileSize(totalSize),
+      'totalSizeFormatted': _formatFileSize(totalSize),
     };
   }
 }

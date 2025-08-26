@@ -1,3 +1,4 @@
+// lib/mouse/presentation/widgets/touch_pad_area.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
@@ -34,6 +35,7 @@ class _TouchpadAreaState extends State<TouchpadArea> {
   bool _isDragging = false;
   bool _isTextSelecting = false;
   Offset? _textSelectionStart;
+  bool _isScaling = false;
 
   // Gesture detection variables
   late DateTime _lastTapTime;
@@ -58,6 +60,7 @@ class _TouchpadAreaState extends State<TouchpadArea> {
         _pointerCount = 0;
         _lastPanPosition = null;
         _lastScaleValue = 1.0;
+        _isScaling = false;
         if (_isDragging) {
           _isDragging = false;
           widget.onDragEnd();
@@ -91,25 +94,42 @@ class _TouchpadAreaState extends State<TouchpadArea> {
     widget.onRightClick();
   }
 
-  void _handlePanStart(DragStartDetails details) {
+  void _handleScaleStart(ScaleStartDetails details) {
     if (!widget.isConnected) return;
+    _lastScaleValue = 1.0;
+    _isScaling = false;
 
     if (_pointerCount == 1) {
-      _lastPanPosition = details.localPosition;
+      _lastPanPosition = details.localFocalPoint;
     }
   }
 
-  void _handlePanUpdate(DragUpdateDetails details) {
+  void _handleScaleUpdate(ScaleUpdateDetails details) {
     if (!widget.isConnected) return;
 
-    if (_pointerCount == 1) {
+    if (_pointerCount == 1 && !_isTextSelecting) {
       // Single finger - mouse movement
-      widget.onPanUpdate(details);
-      _lastPanPosition = details.localPosition;
-    } else if (_pointerCount == 2) {
-      // Two finger scrolling
       if (_lastPanPosition != null) {
-        final deltaY = details.localPosition.dy - _lastPanPosition!.dy;
+        final delta = details.localFocalPoint - _lastPanPosition!;
+        widget.onPanUpdate(DragUpdateDetails(
+          delta: delta,
+          localPosition: details.localFocalPoint,
+          globalPosition: details.focalPoint,
+        ));
+      }
+      _lastPanPosition = details.localFocalPoint;
+    } else if (_pointerCount == 2) {
+      // Check if this is a scale gesture (pinch/zoom)
+      if (details.scale != 1.0 &&
+          (details.scale - _lastScaleValue).abs() > 0.01) {
+        _isScaling = true;
+        final scaleDelta = details.scale - _lastScaleValue;
+        widget.onZoom(scaleDelta);
+        _lastScaleValue = details.scale;
+      }
+      // Check for two-finger scroll (when not scaling)
+      else if (!_isScaling && _lastPanPosition != null) {
+        final deltaY = details.localFocalPoint.dy - _lastPanPosition!.dy;
 
         // Convert vertical movement to scroll
         if (deltaY.abs() > 2.0) {
@@ -118,26 +138,7 @@ class _TouchpadAreaState extends State<TouchpadArea> {
           widget.onScroll(scrollAmount);
         }
       }
-      _lastPanPosition = details.localPosition;
-    }
-  }
-
-  void _handleScaleStart(ScaleStartDetails details) {
-    if (!widget.isConnected) return;
-    _lastScaleValue = 1.0;
-  }
-
-  void _handleScaleUpdate(ScaleUpdateDetails details) {
-    if (!widget.isConnected) return;
-
-    if (_pointerCount >= 2) {
-      // Pinch to zoom
-      final scaleDelta = details.scale - _lastScaleValue;
-      if (scaleDelta.abs() > 0.01) {
-        // Threshold to avoid jittery zooming
-        widget.onZoom(scaleDelta);
-        _lastScaleValue = details.scale;
-      }
+      _lastPanPosition = details.localFocalPoint;
     }
   }
 
@@ -197,7 +198,6 @@ class _TouchpadAreaState extends State<TouchpadArea> {
     }
   }
 
-// Also update your gesture hint method:
   String _getGestureHint() {
     if (_pointerCount == 0) {
       return 'Tap to click • Drag to move • Long press (1 finger) to select text';
@@ -220,9 +220,8 @@ class _TouchpadAreaState extends State<TouchpadArea> {
       onPointerDown: _handlePointerDown,
       onPointerUp: _handlePointerUp,
       child: GestureDetector(
+        // Remove conflicting pan gestures and use only scale detector
         onTap: _pointerCount == 2 ? _handleTwoFingerTap : _handleTap,
-        onPanStart: _handlePanStart,
-        onPanUpdate: _handlePanUpdate,
         onScaleStart: _handleScaleStart,
         onScaleUpdate: _handleScaleUpdate,
         onLongPressStart: _handleLongPressStart,

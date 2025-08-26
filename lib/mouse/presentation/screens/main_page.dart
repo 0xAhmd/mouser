@@ -1,3 +1,4 @@
+// lib/mouse/presentation/screens/main_page.dart
 import 'dart:ui';
 import 'package:flutter/material.dart' hide ConnectionState;
 import 'package:flutter/rendering.dart';
@@ -5,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:mouser/keyboard/presentation/pages/keyboard_page.dart';
+import 'package:mouser/file_transfer/presentation/pages/file_transfer_page.dart';
 import 'package:mouser/mouse/presentation/widgets/control_button.dart';
 import 'package:mouser/mouse/presentation/widgets/touch_pad_area.dart';
 import 'package:mouser/mouse/presentation/widgets/animated_button.dart';
@@ -39,6 +41,7 @@ class _MouserScreenState extends State<MouserScreen>
     _pages.addAll([
       _buildMousePage(),
       const KeyboardPage(),
+      const FileTransferPage(), // Add file transfer page
     ]);
 
     // Initialize animation controller for navigation bar
@@ -228,15 +231,18 @@ class _MouserScreenState extends State<MouserScreen>
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
               _buildNavItem(
-                image: 'assets/click.png',
-                label: 'Mouse',
+                icon: Icons.mouse,
                 index: 0,
                 theme: theme,
               ),
               _buildNavItem(
-                image: 'assets/keyboard.png',
-                label: 'Keyboard',
+                icon: Icons.keyboard,
                 index: 1,
+                theme: theme,
+              ),
+              _buildNavItem(
+                image: "assets/file.png",
+                index: 2,
                 theme: theme,
               ),
             ],
@@ -247,8 +253,9 @@ class _MouserScreenState extends State<MouserScreen>
   }
 
   Widget _buildNavItem({
-    required String image,
-    required String label,
+    IconData? icon,
+    String? image,
+     String? label,
     required int index,
     required ThemeData theme,
   }) {
@@ -267,21 +274,35 @@ class _MouserScreenState extends State<MouserScreen>
           },
           child: Transform.scale(
             scale: scale,
-            child: Image.asset(
-              image,
-              color: isSelected
-                  ? theme.colorScheme.primary
-                  : theme.colorScheme.onSurface.withOpacity(0.6),
-              width: 26.sp,
-              errorBuilder: (context, error, stackTrace) {
-                return Icon(
-                  isSelected ? Icons.mouse : Icons.keyboard,
-                  color: isSelected
-                      ? theme.colorScheme.primary
-                      : theme.colorScheme.onSurface.withOpacity(0.6),
-                  size: 26.sp,
-                );
-              },
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                icon != null
+                    ? Icon(
+                        icon,
+                        color: isSelected
+                            ? theme.colorScheme.primary
+                            : theme.colorScheme.onSurface.withOpacity(0.6),
+                        size: 26.sp,
+                      )
+                    : Image.asset(
+                        image!,
+                        color: isSelected
+                            ? theme.colorScheme.primary
+                            : theme.colorScheme.onSurface.withOpacity(0.6),
+                        width: 26.sp,
+                        errorBuilder: (context, error, stackTrace) {
+                          return Icon(
+                            Icons.error,
+                            color: isSelected
+                                ? theme.colorScheme.primary
+                                : theme.colorScheme.onSurface.withOpacity(0.6),
+                            size: 26.sp,
+                          );
+                        },
+                      ),
+             
+              ],
             ),
           ),
         );
