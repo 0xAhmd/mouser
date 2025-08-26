@@ -285,11 +285,11 @@ class _FileTransferPageState extends State<FileTransferPage> {
                       'Destination: ${state.selectedDirectoryInfo}',
                       style: TextStyle(fontSize: 12.sp),
                     ),
-                    if (state.diskSpaceInfo != null)
-                      Text(
-                        state.diskSpaceInfo! as String,
-                        style: TextStyle(fontSize: 12.sp),
-                      ),
+                    // Fixed: Use diskSpaceInfoText property instead of casting diskSpaceInfo to String
+                    Text(
+                      state.diskSpaceInfoText,
+                      style: TextStyle(fontSize: 12.sp),
+                    ),
                   ],
                 ),
               ),
