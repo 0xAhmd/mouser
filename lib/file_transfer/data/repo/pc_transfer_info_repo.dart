@@ -1,4 +1,3 @@
-
 import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
@@ -6,7 +5,6 @@ import 'package:mouser/file_transfer/data/models/pc_file_info.dart';
 import 'package:mouser/file_transfer/data/service/pc_transfer_service.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:path_provider/path_provider.dart';
-
 
 class PCTransferRepository {
   final PCTransferService _service;
@@ -23,6 +21,10 @@ class PCTransferRepository {
       connectTimeout: const Duration(seconds: 30),
       receiveTimeout: const Duration(seconds: 60),
       headers: {'Accept': 'application/json'},
+      // Add validateStatus to handle HTTP errors more gracefully
+      validateStatus: (status) {
+        return status != null && status < 500;
+      },
     ));
 
     dio.interceptors.add(LogInterceptor(
@@ -31,6 +33,26 @@ class PCTransferRepository {
       logPrint: (obj) => debugPrint('PC_TRANSFER DIO: $obj'),
     ));
 
+    // Add error handling interceptor
+    dio.interceptors.add(
+      InterceptorsWrapper(
+        onResponse: (response, handler) {
+          // Sanitize response data to handle null numeric values
+          if (response.data is Map<String, dynamic>) {
+            response.data = _sanitizeJsonData(response.data);
+          }
+          handler.next(response);
+        },
+        onError: (error, handler) {
+          debugPrint('❌ PC_TRANSFER ERROR: ${error.type} - ${error.message}');
+          debugPrint(
+              '🔍 ERROR DETAILS: ${error.response?.statusCode} ${error.response?.statusMessage}');
+          debugPrint('🔍 ERROR DATA: ${error.response?.data}');
+          handler.next(error);
+        },
+      ),
+    );
+
     return dio;
   }
 
@@ -38,7 +60,8 @@ class PCTransferRepository {
     final dio = Dio(BaseOptions(
       baseUrl: baseUrl,
       connectTimeout: const Duration(seconds: 30),
-      receiveTimeout: const Duration(minutes: 10), // Longer timeout for downloads
+      receiveTimeout:
+          const Duration(minutes: 10), // Longer timeout for downloads
     ));
 
     dio.interceptors.add(LogInterceptor(
@@ -50,15 +73,114 @@ class PCTransferRepository {
     return dio;
   }
 
+  // Helper method to sanitize JSON data and replace null numeric values with defaults
+  static Map<String, dynamic> _sanitizeJsonData(Map<String, dynamic> data) {
+    final sanitized = <String, dynamic>{};
+
+    data.forEach((key, value) {
+      if (value == null) {
+        // Set appropriate defaults for known numeric fields
+        if (_isNumericField(key)) {
+          sanitized[key] = 0;
+        } else if (_isBooleanField(key)) {
+          sanitized[key] = false;
+        } else if (_isStringField(key)) {
+          sanitized[key] = '';
+        } else if (_isListField(key)) {
+          sanitized[key] = <dynamic>[];
+        } else {
+          sanitized[key] = value; // Keep null for other fields
+        }
+      } else if (value is Map<String, dynamic>) {
+        sanitized[key] = _sanitizeJsonData(value);
+      } else if (value is List) {
+        sanitized[key] = value.map((item) {
+          if (item is Map<String, dynamic>) {
+            return _sanitizeJsonData(item);
+          }
+          return item;
+        }).toList();
+      } else {
+        sanitized[key] = value;
+      }
+    });
+
+    return sanitized;
+  }
+
+  static bool _isNumericField(String key) {
+    const numericFields = [
+      'totalFiles',
+      'totalDirectories',
+      'fileCount',
+      'dirCount',
+      'downloadableFiles',
+      'totalSize',
+      'maxFileSizeMb',
+      'totalRequested',
+      'readyForDownload',
+      'errors',
+      'size',
+      'sizeMb'
+    ];
+    return numericFields.contains(key);
+  }
+
+  static bool _isBooleanField(String key) {
+    const booleanFields = ['accessible', 'downloadable', 'exists', 'writable'];
+    return booleanFields.contains(key);
+  }
+
+  static bool _isStringField(String key) {
+    const stringFields = [
+      'totalSizeFormatted',
+      'sizeFormatted',
+      'name',
+      'path',
+      'type',
+      'extension',
+      'mimeType',
+      'skipReason',
+      'modified',
+      'status',
+      'currentPath',
+      'parentPath',
+      'homePath',
+      'error',
+      'downloadUrl'
+    ];
+    return stringFields.contains(key);
+  }
+
+  static bool _isListField(String key) {
+    const listFields = [
+      'allowedExtensions',
+      'directories',
+      'files',
+      'folders',
+      'downloads'
+    ];
+    return listFields.contains(key);
+  }
+
   Future<PCBrowseResponse> browsePath(String? path) async {
     try {
       debugPrint('🔍 Browsing path: ${path ?? 'default'}');
       final response = await _service.browsePath(path);
-      debugPrint('✅ Found ${response.files.length} files, ${response.directories.length} directories');
+      debugPrint(
+          '✅ Found ${response.files.length} files, ${response.directories.length} directories');
       return response;
     } catch (e) {
       debugPrint('❌ Error browsing path: $e');
-      rethrow;
+      // Return a safe empty response on error
+      return const PCBrowseResponse(
+        status: 'error',
+        directories: [],
+        files: [],
+        totalDirectories: 0,
+        totalFiles: 0,
+        error: 'Failed to browse path',
+      );
     }
   }
 
@@ -71,7 +193,20 @@ class PCTransferRepository {
       return response;
     } catch (e) {
       debugPrint('❌ Error getting file info: $e');
-      rethrow;
+      // Return a safe empty response on error
+      return const PCFileInfoResponse(
+        status: 'error',
+        files: [],
+        summary: FilesSummary(
+          totalFiles: 0,
+          downloadableFiles: 0,
+          totalSize: 0,
+          totalSizeFormatted: '0 B',
+          maxFileSizeMb: 0,
+          allowedExtensions: [],
+        ),
+        error: 'Failed to get file info',
+      );
     }
   }
 
@@ -80,11 +215,22 @@ class PCTransferRepository {
       debugPrint('🚀 Preparing download for ${filePaths.length} files');
       final request = {'paths': filePaths};
       final response = await _service.prepareDownload(request);
-      debugPrint('✅ ${response.summary.readyForDownload} files ready for download');
+      debugPrint(
+          '✅ ${response.summary.readyForDownload} files ready for download');
       return response;
     } catch (e) {
       debugPrint('❌ Error preparing download: $e');
-      rethrow;
+      // Return a safe empty response on error
+      return const PCDownloadResponse(
+        status: 'error',
+        downloads: [],
+        summary: DownloadSummary(
+          totalRequested: 0,
+          readyForDownload: 0,
+          errors: 0,
+        ),
+        error: 'Failed to prepare download',
+      );
     }
   }
 
@@ -96,7 +242,13 @@ class PCTransferRepository {
       return response;
     } catch (e) {
       debugPrint('❌ Error getting quick access folders: $e');
-      rethrow;
+      // Return a safe empty response on error
+      return const QuickAccessResponse(
+        status: 'error',
+        folders: [],
+        homePath: '',
+        error: 'Failed to get quick access folders',
+      );
     }
   }
 
@@ -113,7 +265,7 @@ class PCTransferRepository {
 
       // Get downloads directory
       Directory? downloadsDir;
-      
+
       if (Platform.isAndroid) {
         downloadsDir = Directory('/storage/emulated/0/Download');
         if (!downloadsDir.existsSync()) {
@@ -150,15 +302,15 @@ class PCTransferRepository {
 
       final fileName = downloadInfo.name ?? 'downloaded_file';
       final filePath = '$downloadDir/$fileName';
-      
+
       // Handle duplicate files
       String finalFilePath = filePath;
       int counter = 1;
       while (File(finalFilePath).existsSync()) {
-        final baseName = fileName.contains('.') 
+        final baseName = fileName.contains('.')
             ? fileName.substring(0, fileName.lastIndexOf('.'))
             : fileName;
-        final extension = fileName.contains('.') 
+        final extension = fileName.contains('.')
             ? fileName.substring(fileName.lastIndexOf('.'))
             : '';
         finalFilePath = '$downloadDir/${baseName}_$counter$extension';
@@ -186,7 +338,6 @@ class PCTransferRepository {
       }
 
       throw Exception('Download failed with status: ${response.statusCode}');
-
     } catch (e) {
       debugPrint('❌ Error downloading file: $e');
       return DownloadResult.error(error: e.toString());
@@ -199,26 +350,26 @@ class PCTransferRepository {
     void Function(int received, int total, String fileName)? onFileProgress,
   }) async {
     final results = <DownloadResult>[];
-    
+
     for (int i = 0; i < downloadInfos.length; i++) {
       final downloadInfo = downloadInfos[i];
-      
+
       onOverallProgress?.call(i, downloadInfos.length);
-      
+
       try {
         final result = await downloadFile(
           downloadInfo,
           onProgress: (received, total) {
-            onFileProgress?.call(received, total, downloadInfo.name ?? 'Unknown');
+            onFileProgress?.call(
+                received, total, downloadInfo.name ?? 'Unknown');
           },
         );
         results.add(result);
-        
+
         // Small delay between downloads
         if (i < downloadInfos.length - 1) {
           await Future.delayed(const Duration(milliseconds: 500));
         }
-        
       } catch (e) {
         results.add(DownloadResult.error(error: e.toString()));
       }
@@ -278,6 +429,6 @@ class DownloadResult {
     );
   }
 
-  String get formattedSize => 
+  String get formattedSize =>
       fileSize != null ? PCTransferRepository.formatFileSize(fileSize!) : '0 B';
 }

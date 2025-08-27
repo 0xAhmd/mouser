@@ -46,8 +46,8 @@ PCBrowseResponse _$PCBrowseResponseFromJson(Map<String, dynamic> json) =>
       files: (json['files'] as List<dynamic>)
           .map((e) => PCFileInfo.fromJson(e as Map<String, dynamic>))
           .toList(),
-      totalDirectories: (json['totalDirectories'] as num).toInt(),
-      totalFiles: (json['totalFiles'] as num).toInt(),
+      totalDirectories: (json['totalDirectories'] as num?)?.toInt() ?? 0,
+      totalFiles: (json['totalFiles'] as num?)?.toInt() ?? 0,
       error: json['error'] as String?,
     );
 
@@ -82,14 +82,15 @@ Map<String, dynamic> _$PCFileInfoResponseToJson(PCFileInfoResponse instance) =>
     };
 
 FilesSummary _$FilesSummaryFromJson(Map<String, dynamic> json) => FilesSummary(
-      totalFiles: (json['totalFiles'] as num).toInt(),
-      downloadableFiles: (json['downloadableFiles'] as num).toInt(),
-      totalSize: (json['totalSize'] as num).toInt(),
-      totalSizeFormatted: json['totalSizeFormatted'] as String,
-      maxFileSizeMb: (json['maxFileSizeMb'] as num).toInt(),
-      allowedExtensions: (json['allowedExtensions'] as List<dynamic>)
-          .map((e) => e as String)
-          .toList(),
+      totalFiles: (json['totalFiles'] as num?)?.toInt() ?? 0,
+      downloadableFiles: (json['downloadableFiles'] as num?)?.toInt() ?? 0,
+      totalSize: (json['totalSize'] as num?)?.toInt() ?? 0,
+      totalSizeFormatted: json['totalSizeFormatted'] as String? ?? '0 B',
+      maxFileSizeMb: (json['maxFileSizeMb'] as num?)?.toInt() ?? 0,
+      allowedExtensions: (json['allowedExtensions'] as List<dynamic>?)
+              ?.map((e) => e as String)
+              .toList() ??
+          [],
     );
 
 Map<String, dynamic> _$FilesSummaryToJson(FilesSummary instance) =>
@@ -147,9 +148,9 @@ Map<String, dynamic> _$PCDownloadResponseToJson(PCDownloadResponse instance) =>
 
 DownloadSummary _$DownloadSummaryFromJson(Map<String, dynamic> json) =>
     DownloadSummary(
-      totalRequested: (json['totalRequested'] as num).toInt(),
-      readyForDownload: (json['readyForDownload'] as num).toInt(),
-      errors: (json['errors'] as num).toInt(),
+      totalRequested: (json['totalRequested'] as num?)?.toInt() ?? 0,
+      readyForDownload: (json['readyForDownload'] as num?)?.toInt() ?? 0,
+      errors: (json['errors'] as num?)?.toInt() ?? 0,
     );
 
 Map<String, dynamic> _$DownloadSummaryToJson(DownloadSummary instance) =>
@@ -163,9 +164,9 @@ QuickAccessFolder _$QuickAccessFolderFromJson(Map<String, dynamic> json) =>
     QuickAccessFolder(
       name: json['name'] as String,
       path: json['path'] as String,
-      fileCount: (json['fileCount'] as num).toInt(),
-      dirCount: (json['dirCount'] as num).toInt(),
-      accessible: json['accessible'] as bool,
+      fileCount: (json['fileCount'] as num?)?.toInt() ?? 0,
+      dirCount: (json['dirCount'] as num?)?.toInt() ?? 0,
+      accessible: json['accessible'] as bool? ?? false,
     );
 
 Map<String, dynamic> _$QuickAccessFolderToJson(QuickAccessFolder instance) =>

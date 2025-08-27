@@ -47,7 +47,9 @@ class PCBrowseResponse {
   final String? parentPath;
   final List<PCFileInfo> directories;
   final List<PCFileInfo> files;
+  @JsonKey(name: 'totalDirectories', defaultValue: 0)
   final int totalDirectories;
+  @JsonKey(name: 'totalFiles', defaultValue: 0)
   final int totalFiles;
   final String? error;
 
@@ -90,11 +92,17 @@ class PCFileInfoResponse {
 
 @JsonSerializable()
 class FilesSummary {
+  @JsonKey(name: 'totalFiles', defaultValue: 0)
   final int totalFiles;
+  @JsonKey(name: 'downloadableFiles', defaultValue: 0)
   final int downloadableFiles;
+  @JsonKey(name: 'totalSize', defaultValue: 0)
   final int totalSize;
+  @JsonKey(name: 'totalSizeFormatted', defaultValue: '0 B')
   final String totalSizeFormatted;
+  @JsonKey(name: 'maxFileSizeMb', defaultValue: 0)
   final int maxFileSizeMb;
+  @JsonKey(name: 'allowedExtensions', defaultValue: <String>[])
   final List<String> allowedExtensions;
 
   const FilesSummary({
@@ -164,8 +172,11 @@ class PCDownloadResponse {
 
 @JsonSerializable()
 class DownloadSummary {
+  @JsonKey(name: 'totalRequested', defaultValue: 0)
   final int totalRequested;
+  @JsonKey(name: 'readyForDownload', defaultValue: 0)
   final int readyForDownload;
+  @JsonKey(name: 'errors', defaultValue: 0)
   final int errors;
 
   const DownloadSummary({
@@ -184,8 +195,11 @@ class DownloadSummary {
 class QuickAccessFolder {
   final String name;
   final String path;
+  @JsonKey(name: 'fileCount', defaultValue: 0)
   final int fileCount;
+  @JsonKey(name: 'dirCount', defaultValue: 0)
   final int dirCount;
+  @JsonKey(name: 'accessible', defaultValue: false)
   final bool accessible;
 
   const QuickAccessFolder({
