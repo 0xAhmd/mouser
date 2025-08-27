@@ -18,10 +18,6 @@ class MouseCubit extends Cubit<MouseState> {
     emit(state.copyWith(scrollSensitivity: scrollSensitivity));
   }
 
-  void updateZoomSensitivity(double zoomSensitivity) {
-    emit(state.copyWith(zoomSensitivity: zoomSensitivity));
-  }
-
   Future<void> sendMouseCommand(
     String action, {
     Map<String, dynamic>? data,
@@ -124,9 +120,9 @@ class MouseCubit extends Cubit<MouseState> {
     sendMouseCommand(direction);
   }
 
-  // New enhanced gesture methods
+  // Enhanced two-finger scroll method
   void sendTwoFingerScroll(double deltaY) {
-    // Convert deltaY to scroll commands
+    // Convert deltaY to scroll commands with enhanced sensitivity
     final scrollAmount = deltaY * state.scrollSensitivity;
 
     // Use the new gesture endpoint for better handling
@@ -172,28 +168,6 @@ class MouseCubit extends Cubit<MouseState> {
       emit(state.copyWith(
         errorMessage: 'Gesture command failed: $e',
       ));
-    }
-  }
-
-  void sendPinchZoom(double scaleDelta) {
-    // Convert pinch gesture to Ctrl+Scroll for zooming
-    final zoomAmount = scaleDelta * state.zoomSensitivity;
-
-    if (zoomAmount.abs() > 0.01) {
-      final isZoomIn = zoomAmount > 0;
-
-      // Send Ctrl+Scroll combination for zoom
-      sendKeyboardCommand('key_hold_start', data: {'key': 'ctrl'});
-
-      // Send scroll events while holding Ctrl
-      final scrollDirection = isZoomIn ? 'scroll_up' : 'scroll_down';
-      final scrollCount = (zoomAmount.abs() * 5).round().clamp(1, 3);
-
-      for (int i = 0; i < scrollCount; i++) {
-        sendMouseCommand(scrollDirection);
-      }
-
-      sendKeyboardCommand('key_hold_end', data: {'key': 'ctrl'});
     }
   }
 
@@ -276,7 +250,7 @@ class MouseCubit extends Cubit<MouseState> {
     });
   }
 
-  // Smart zoom presets
+  // Basic zoom presets (kept for manual zoom buttons)
   void zoomIn() {
     sendKeyboardCommand('key_combination', data: {
       'keys': ['ctrl', '+']
@@ -316,28 +290,25 @@ class MouseCubit extends Cubit<MouseState> {
     emit(state.copyWith(errorMessage: null));
   }
 
-  // Gesture sensitivity presets
+  // Gesture sensitivity presets (removed zoom sensitivity)
   void setGestureSensitivity(String preset) {
     switch (preset) {
       case 'low':
         emit(state.copyWith(
-          sensitivity: 0.5,
-          scrollSensitivity: 0.3,
-          zoomSensitivity: 0.2,
+          sensitivity: 1.0,
+          scrollSensitivity: 0.5,
         ));
         break;
       case 'medium':
         emit(state.copyWith(
-          sensitivity: 1.0,
-          scrollSensitivity: 0.5,
-          zoomSensitivity: 0.3,
+          sensitivity: 2.5,
+          scrollSensitivity: 1.0,
         ));
         break;
       case 'high':
         emit(state.copyWith(
-          sensitivity: 1.8,
-          scrollSensitivity: 0.8,
-          zoomSensitivity: 0.5,
+          sensitivity: 4.5,
+          scrollSensitivity: 1.8,
         ));
         break;
       default:

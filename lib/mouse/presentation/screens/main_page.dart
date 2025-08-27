@@ -161,9 +161,9 @@ class _MouserScreenState extends State<MouserScreen>
                                   SizedBox(height: 20.h),
                                   _buildConnectionCard(theme),
                                   SizedBox(height: 20.h),
-                                  _buildSensitivityCard(theme),
-                                  SizedBox(height: 20.h),
                                   _buildTouchpadCard(theme),
+                                  SizedBox(height: 20.h),
+                                  _buildSensitivityCard(theme),
                                   SizedBox(height: 20.h),
                                   _buildControlButtons(theme),
                                   SizedBox(height: 20.h),
@@ -299,7 +299,6 @@ class _MouserScreenState extends State<MouserScreen>
                           );
                         },
                       ),
-             
               ],
             ),
           ),
@@ -436,6 +435,71 @@ class _MouserScreenState extends State<MouserScreen>
     );
   }
 
+  Widget _buildTouchpadCard(ThemeData theme) {
+    return BlocBuilder<ConnectionCubit, ConnectionState>(
+      builder: (context, connectionState) {
+        return GlassCard(
+          padding: EdgeInsets.zero,
+          child: Container(
+            height: 350.h, // Enhanced touchpad height
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(20.r),
+              gradient: LinearGradient(
+                colors: [
+                  theme.colorScheme.primary.withOpacity(0.1),
+                  theme.colorScheme.primary.withOpacity(0.05),
+                ],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+            ),
+            child: TouchpadArea(
+              isConnected: connectionState.isConnected,
+              onPanUpdate: (details) {
+                if (connectionState.isConnected) {
+                  context.read<MouseCubit>().sendMoveCommand(
+                        details.delta.dx,
+                        details.delta.dy,
+                      );
+                }
+              },
+              onTap: () {
+                if (connectionState.isConnected) {
+                  context.read<MouseCubit>().sendClickCommand('left_click');
+                  HapticFeedback.lightImpact();
+                }
+              },
+              onScroll: (deltaY) {
+                if (connectionState.isConnected) {
+                  context.read<MouseCubit>().sendTwoFingerScroll(deltaY);
+                  HapticFeedback.selectionClick();
+                }
+              },
+              onRightClick: () {
+                if (connectionState.isConnected) {
+                  context.read<MouseCubit>().sendRightClick();
+                  HapticFeedback.mediumImpact();
+                }
+              },
+              onDragStart: () {
+                if (connectionState.isConnected) {
+                  context.read<MouseCubit>().startTextSelection();
+                  HapticFeedback.heavyImpact();
+                }
+              },
+              onDragEnd: () {
+                if (connectionState.isConnected) {
+                  context.read<MouseCubit>().endTextSelection();
+                  HapticFeedback.lightImpact();
+                }
+              },
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   Widget _buildSensitivityCard(ThemeData theme) {
     return BlocBuilder<MouseCubit, MouseState>(
       builder: (context, mouseState) {
@@ -481,12 +545,12 @@ class _MouserScreenState extends State<MouserScreen>
 
               SizedBox(height: 20.h),
 
-              // Mouse sensitivity
+              // Mouse sensitivity (expanded range)
               _buildSensitivitySlider(
                 'Mouse',
                 mouseState.sensitivity,
-                0.1,
-                3.0,
+                1.0,
+                6.0,
                 (value) => context.read<MouseCubit>().updateSensitivity(value),
                 theme,
                 Icons.mouse,
@@ -494,30 +558,16 @@ class _MouserScreenState extends State<MouserScreen>
 
               SizedBox(height: 16.h),
 
-              // Scroll sensitivity
+              // Scroll sensitivity (expanded range)
               _buildSensitivitySlider(
                 'Scroll',
                 mouseState.scrollSensitivity,
-                0.1,
-                1.0,
+                0.5,
+                3.0,
                 (value) =>
                     context.read<MouseCubit>().updateScrollSensitivity(value),
                 theme,
                 Icons.swap_vert,
-              ),
-
-              SizedBox(height: 16.h),
-
-              // Zoom sensitivity
-              _buildSensitivitySlider(
-                'Zoom',
-                mouseState.zoomSensitivity,
-                0.1,
-                1.0,
-                (value) =>
-                    context.read<MouseCubit>().updateZoomSensitivity(value),
-                theme,
-                Icons.zoom_in,
               ),
             ],
           ),
@@ -563,17 +613,13 @@ class _MouserScreenState extends State<MouserScreen>
   }
 
   String _getSelectedPreset(MouseState mouseState) {
-    if (mouseState.sensitivity == 0.5 &&
-        mouseState.scrollSensitivity == 0.3 &&
-        mouseState.zoomSensitivity == 0.2) {
+    if (mouseState.sensitivity == 1.0 && mouseState.scrollSensitivity == 0.5) {
       return 'low';
-    } else if (mouseState.sensitivity == 1.0 &&
-        mouseState.scrollSensitivity == 0.5 &&
-        mouseState.zoomSensitivity == 0.3) {
+    } else if (mouseState.sensitivity == 2.5 &&
+        mouseState.scrollSensitivity == 1.0) {
       return 'medium';
-    } else if (mouseState.sensitivity == 1.8 &&
-        mouseState.scrollSensitivity == 0.8 &&
-        mouseState.zoomSensitivity == 0.5) {
+    } else if (mouseState.sensitivity == 4.5 &&
+        mouseState.scrollSensitivity == 1.8) {
       return 'high';
     }
     return 'custom';
@@ -641,77 +687,6 @@ class _MouserScreenState extends State<MouserScreen>
     );
   }
 
-  Widget _buildTouchpadCard(ThemeData theme) {
-    return BlocBuilder<ConnectionCubit, ConnectionState>(
-      builder: (context, connectionState) {
-        return GlassCard(
-          padding: EdgeInsets.zero,
-          child: Container(
-            height: 350.h, // Increased height for enhanced touchpad
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(20.r),
-              gradient: LinearGradient(
-                colors: [
-                  theme.colorScheme.primary.withOpacity(0.1),
-                  theme.colorScheme.primary.withOpacity(0.05),
-                ],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-            ),
-            child: TouchpadArea(
-              isConnected: connectionState.isConnected,
-              onPanUpdate: (details) {
-                if (connectionState.isConnected) {
-                  context.read<MouseCubit>().sendMoveCommand(
-                        details.delta.dx,
-                        details.delta.dy,
-                      );
-                }
-              },
-              onTap: () {
-                if (connectionState.isConnected) {
-                  context.read<MouseCubit>().sendClickCommand('left_click');
-                  HapticFeedback.lightImpact();
-                }
-              },
-              onScroll: (deltaY) {
-                if (connectionState.isConnected) {
-                  context.read<MouseCubit>().sendTwoFingerScroll(deltaY);
-                  HapticFeedback.selectionClick();
-                }
-              },
-              onZoom: (scaleDelta) {
-                if (connectionState.isConnected) {
-                  context.read<MouseCubit>().sendPinchZoom(scaleDelta);
-                  HapticFeedback.lightImpact();
-                }
-              },
-              onRightClick: () {
-                if (connectionState.isConnected) {
-                  context.read<MouseCubit>().sendRightClick();
-                  HapticFeedback.mediumImpact();
-                }
-              },
-              onDragStart: () {
-                if (connectionState.isConnected) {
-                  context.read<MouseCubit>().startTextSelection();
-                  HapticFeedback.heavyImpact();
-                }
-              },
-              onDragEnd: () {
-                if (connectionState.isConnected) {
-                  context.read<MouseCubit>().endTextSelection();
-                  HapticFeedback.lightImpact();
-                }
-              },
-            ),
-          ),
-        );
-      },
-    );
-  }
-
   Widget _buildControlButtons(ThemeData theme) {
     return BlocBuilder<ConnectionCubit, ConnectionState>(
       builder: (context, connectionState) {
@@ -774,7 +749,7 @@ class _MouserScreenState extends State<MouserScreen>
                   SizedBox(width: 12.w),
                   Expanded(
                     child: ControlButton(
-                      icon: Icons.keyboard_arrow_up,
+                      icon: Icons.keyboard_double_arrow_up,
                       label: 'Scroll Up',
                       onPressed: connectionState.isConnected
                           ? () => context
@@ -845,7 +820,7 @@ class _MouserScreenState extends State<MouserScreen>
 
               SizedBox(height: 12.h),
 
-              // Zoom controls
+              // Zoom controls (kept as manual buttons)
               Row(
                 children: [
                   Expanded(

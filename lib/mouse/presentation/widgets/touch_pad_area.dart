@@ -7,7 +7,6 @@ class TouchpadArea extends StatefulWidget {
   final Function(DragUpdateDetails) onPanUpdate;
   final VoidCallback onTap;
   final Function(double) onScroll;
-  final Function(double) onZoom;
   final VoidCallback onRightClick;
   final VoidCallback onDragStart;
   final VoidCallback onDragEnd;
@@ -18,7 +17,6 @@ class TouchpadArea extends StatefulWidget {
     required this.onPanUpdate,
     required this.onTap,
     required this.onScroll,
-    required this.onZoom,
     required this.onRightClick,
     required this.onDragStart,
     required this.onDragEnd,
@@ -31,11 +29,10 @@ class TouchpadArea extends StatefulWidget {
 class _TouchpadAreaState extends State<TouchpadArea> {
   int _pointerCount = 0;
   Offset? _lastPanPosition;
-  double _lastScaleValue = 1.0;
   bool _isDragging = false;
   bool _isTextSelecting = false;
   Offset? _textSelectionStart;
-  bool _isScaling = false;
+  bool _isScrolling = false;
 
   // Gesture detection variables
   late DateTime _lastTapTime;
@@ -59,8 +56,7 @@ class _TouchpadAreaState extends State<TouchpadArea> {
       if (_pointerCount <= 0) {
         _pointerCount = 0;
         _lastPanPosition = null;
-        _lastScaleValue = 1.0;
-        _isScaling = false;
+        _isScrolling = false;
         if (_isDragging) {
           _isDragging = false;
           widget.onDragEnd();
@@ -96,11 +92,13 @@ class _TouchpadAreaState extends State<TouchpadArea> {
 
   void _handleScaleStart(ScaleStartDetails details) {
     if (!widget.isConnected) return;
-    _lastScaleValue = 1.0;
-    _isScaling = false;
+    _isScrolling = false;
 
     if (_pointerCount == 1) {
       _lastPanPosition = details.localFocalPoint;
+    } else if (_pointerCount == 2) {
+      _lastPanPosition = details.localFocalPoint;
+      _isScrolling = true;
     }
   }
 
@@ -118,23 +116,15 @@ class _TouchpadAreaState extends State<TouchpadArea> {
         ));
       }
       _lastPanPosition = details.localFocalPoint;
-    } else if (_pointerCount == 2) {
-      // Check if this is a scale gesture (pinch/zoom)
-      if (details.scale != 1.0 &&
-          (details.scale - _lastScaleValue).abs() > 0.01) {
-        _isScaling = true;
-        final scaleDelta = details.scale - _lastScaleValue;
-        widget.onZoom(scaleDelta);
-        _lastScaleValue = details.scale;
-      }
-      // Check for two-finger scroll (when not scaling)
-      else if (!_isScaling && _lastPanPosition != null) {
+    } else if (_pointerCount == 2 && _isScrolling) {
+      // Two finger scrolling - laptop style (up = scroll up, down = scroll down)
+      if (_lastPanPosition != null) {
         final deltaY = details.localFocalPoint.dy - _lastPanPosition!.dy;
 
-        // Convert vertical movement to scroll
-        if (deltaY.abs() > 2.0) {
-          // Threshold to avoid jittery scrolling
-          final scrollAmount = -deltaY / 20.0; // Negative for natural scrolling
+        // Convert vertical movement to scroll with threshold to avoid jittery scrolling
+        if (deltaY.abs() > 3.0) {
+          // Laptop-style scrolling: negative deltaY = scroll up, positive = scroll down
+          final scrollAmount = -deltaY / 15.0; // Adjust divisor for scroll sensitivity
           widget.onScroll(scrollAmount);
         }
       }
@@ -206,7 +196,7 @@ class _TouchpadAreaState extends State<TouchpadArea> {
           ? 'Selecting text... (1 finger only)'
           : 'Moving cursor...';
     } else if (_pointerCount == 2) {
-      return 'Two fingers: Scroll • Pinch to zoom • Tap for right-click';
+      return 'Two fingers: Scroll up/down • Tap for right-click';
     } else {
       return 'Multi-touch gesture active';
     }
@@ -258,7 +248,7 @@ class _TouchpadAreaState extends State<TouchpadArea> {
                       _isTextSelecting
                           ? Icons.text_fields
                           : _pointerCount >= 2
-                              ? Icons.gesture
+                              ? Icons.swipe_vertical
                               : Icons.touch_app,
                       size: 48.sp,
                       color: theme.colorScheme.primary,
@@ -302,7 +292,7 @@ class _TouchpadAreaState extends State<TouchpadArea> {
                       ),
                       _buildGestureChip(
                         '2 fingers',
-                        'Scroll & Zoom',
+                        'Scroll Only',
                         _pointerCount == 2,
                         theme,
                       ),
