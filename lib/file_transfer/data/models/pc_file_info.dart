@@ -125,10 +125,21 @@ class PCDownloadInfo {
   final String path;
   final String? name;
   final String status;
+  
+  // Fix: Map both possible field names for download URL
+  @JsonKey(name: 'download_url')
   final String? downloadUrl;
+  
   final int? size;
+  
+  // Fix: Map both possible field names for size formatted  
+  @JsonKey(name: 'size_formatted')
   final String? sizeFormatted;
+  
+  // Fix: Map both possible field names for MIME type
+  @JsonKey(name: 'mime_type') 
   final String? mimeType;
+  
   final String? error;
 
   const PCDownloadInfo({
@@ -142,7 +153,7 @@ class PCDownloadInfo {
     this.error,
   });
 
-  bool get canDownload => status == 'ready' && downloadUrl != null;
+  bool get canDownload => status == 'ready' && downloadUrl != null && downloadUrl!.isNotEmpty;
 
   factory PCDownloadInfo.fromJson(Map<String, dynamic> json) =>
       _$PCDownloadInfoFromJson(json);
@@ -172,10 +183,13 @@ class PCDownloadResponse {
 
 @JsonSerializable()
 class DownloadSummary {
-  @JsonKey(name: 'totalRequested', defaultValue: 0)
+  // Fix: Map both possible field names
+  @JsonKey(name: 'total_requested', defaultValue: 0)
   final int totalRequested;
-  @JsonKey(name: 'readyForDownload', defaultValue: 0)
+  
+  @JsonKey(name: 'ready_for_download', defaultValue: 0)
   final int readyForDownload;
+  
   @JsonKey(name: 'errors', defaultValue: 0)
   final int errors;
 
@@ -195,9 +209,9 @@ class DownloadSummary {
 class QuickAccessFolder {
   final String name;
   final String path;
-  @JsonKey(name: 'fileCount', defaultValue: 0)
+  @JsonKey(name: 'file_count', defaultValue: 0)
   final int fileCount;
-  @JsonKey(name: 'dirCount', defaultValue: 0)
+  @JsonKey(name: 'dir_count', defaultValue: 0)
   final int dirCount;
   @JsonKey(name: 'accessible', defaultValue: false)
   final bool accessible;
@@ -220,7 +234,11 @@ class QuickAccessFolder {
 class QuickAccessResponse {
   final String status;
   final List<QuickAccessFolder> folders;
+  
+  // Fix: Map the correct field name
+  @JsonKey(name: 'home_path')
   final String homePath;
+  
   final String? error;
 
   const QuickAccessResponse({

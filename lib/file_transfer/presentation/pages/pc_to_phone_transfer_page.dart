@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart' hide ConnectionState;
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -50,6 +51,57 @@ class _PCTransferPageState extends State<PCTransferPage> {
     );
   }
 
+  void _showDebugDialog() {
+    final cubit = context.read<PCTransferCubit>();
+    final state = cubit.state;
+    
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Debug Information'),
+        content: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text('Selected Files: ${state.selectedFiles.length}'),
+              Text('Can Download: ${state.canDownload}'),
+              Text('Status: ${state.status}'),
+              const SizedBox(height: 16),
+              const Text('Selected Files Details:', style: TextStyle(fontWeight: FontWeight.bold)),
+              ...state.selectedFiles.map((file) => Padding(
+                padding: const EdgeInsets.only(left: 8, top: 4),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('• ${file.name}'),
+                    Text('  Downloadable: ${file.downloadable}'),
+                    Text('  Can Download: ${file.canDownload}'),
+                    if (file.skipReason != null)
+                      Text('  Skip Reason: ${file.skipReason}'),
+                  ],
+                ),
+              ))
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              cubit.debugSelection();
+              Navigator.of(context).pop();
+            },
+            child: const Text('Print to Console'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Close'),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -57,6 +109,20 @@ class _PCTransferPageState extends State<PCTransferPage> {
     return Scaffold(
       extendBody: true,
       backgroundColor: theme.colorScheme.surface,
+      appBar: AppBar(
+        title: const Text('PC Transfer'),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        actions: [
+          // Debug button (only show in debug mode)
+          if (kDebugMode)
+            IconButton(
+              onPressed: _showDebugDialog,
+              icon: const Icon(Icons.bug_report),
+              tooltip: 'Debug Info',
+            ),
+        ],
+      ),
       body: SafeArea(
         child: BlocListener<PCTransferCubit, PCTransferState>(
           listener: (context, state) {
@@ -225,24 +291,63 @@ class _PCTransferPageState extends State<PCTransferPage> {
           return const SizedBox.shrink();
         }
 
+        final downloadableCount = state.selectedFiles.where((f) => f.canDownload).length;
+        final hasNonDownloadable = downloadableCount < state.selectedFiles.length;
+
         return GlassCard(
-          child: Row(
+          child: Column(
             children: [
-              Icon(
-                Icons.check_circle,
-                color: Theme.of(context).colorScheme.primary,
-                size: 20.sp,
+              Row(
+                children: [
+                  Icon(
+                    Icons.check_circle,
+                    color: Theme.of(context).colorScheme.primary,
+                    size: 20.sp,
+                  ),
+                  SizedBox(width: 12.w),
+                  Expanded(
+                    child: Text(
+                      state.selectedFilesInfo,
+                      style: TextStyle(
+                        fontSize: 14.sp,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                ],
               ),
-              SizedBox(width: 12.w),
-              Expanded(
-                child: Text(
-                  state.selectedFilesInfo,
-                  style: TextStyle(
-                    fontSize: 14.sp,
-                    fontWeight: FontWeight.w500,
+              
+              // Show warning if some files can't be downloaded
+              if (hasNonDownloadable) ...[
+                SizedBox(height: 8.h),
+                Container(
+                  padding: EdgeInsets.all(8.w),
+                  decoration: BoxDecoration(
+                    color: Colors.orange.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8.r),
+                    border: Border.all(color: Colors.orange.withOpacity(0.3)),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.warning_amber,
+                        color: Colors.orange,
+                        size: 16.sp,
+                      ),
+                      SizedBox(width: 8.w),
+                      Expanded(
+                        child: Text(
+                          '${state.selectedFiles.length - downloadableCount} files cannot be downloaded',
+                          style: TextStyle(
+                            fontSize: 12.sp,
+                            color: Colors.orange[800],
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-              ),
+              ],
             ],
           ),
         );
@@ -313,48 +418,80 @@ class _PCTransferPageState extends State<PCTransferPage> {
           return const SizedBox.shrink();
         }
 
+        final downloadableCount = state.selectedFiles.where((f) => f.canDownload).length;
+
         return Container(
           padding: EdgeInsets.all(16.w),
-          child: SizedBox(
-            width: double.infinity,
-            child: ElevatedButton.icon(
-              onPressed: state.canDownload
-                  ? () {
-                      context.read<PCTransferCubit>().downloadSelectedFiles();
-                    }
-                  : null,
-              icon: state.status == PCTransferStatus.downloading
-                  ? SizedBox(
-                      width: 16.sp,
-                      height: 16.sp,
-                      child: const CircularProgressIndicator(
-                        strokeWidth: 2,
-                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+          child: Column(
+            children: [
+              // Debug info (only in debug mode)
+              if (kDebugMode && state.selectedFiles.isNotEmpty) ...[
+                Container(
+                  padding: EdgeInsets.all(8.w),
+                  decoration: BoxDecoration(
+                    color: Colors.blue.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8.r),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.info, color: Colors.blue, size: 16.sp),
+                      SizedBox(width: 8.w),
+                      Expanded(
+                        child: Text(
+                          'Debug: ${state.selectedFiles.length} selected, $downloadableCount downloadable, canDownload: ${state.canDownload}',
+                          style: TextStyle(fontSize: 10.sp, color: Colors.blue[800]),
+                        ),
                       ),
-                    )
-                  : Icon(Icons.download, size: 20.sp),
-              label: Text(
-                state.status == PCTransferStatus.downloading
-                    ? 'Downloading...'
-                    : state.selectedFiles.isEmpty
-                        ? 'Select Files to Download'
-                        : 'Download ${state.selectedFiles.where((f) => f.canDownload).length} Files',
-                style: TextStyle(
-                  fontSize: 16.sp,
-                  fontWeight: FontWeight.w600,
+                    ],
+                  ),
+                ),
+                SizedBox(height: 8.h),
+              ],
+              
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: state.canDownload
+                      ? () {
+                          context.read<PCTransferCubit>().downloadSelectedFiles();
+                        }
+                      : null,
+                  icon: state.status == PCTransferStatus.downloading
+                      ? SizedBox(
+                          width: 16.sp,
+                          height: 16.sp,
+                          child: const CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                          ),
+                        )
+                      : Icon(Icons.download, size: 20.sp),
+                  label: Text(
+                    state.status == PCTransferStatus.downloading
+                        ? 'Downloading...'
+                        : state.selectedFiles.isEmpty
+                            ? 'Select Files to Download'
+                            : downloadableCount == 0
+                                ? 'No Files Available for Download'
+                                : 'Download $downloadableCount File${downloadableCount == 1 ? '' : 's'}',
+                    style: TextStyle(
+                      fontSize: 16.sp,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: state.canDownload
+                        ? Theme.of(context).colorScheme.primary
+                        : Colors.grey,
+                    foregroundColor: Colors.white,
+                    padding: EdgeInsets.symmetric(vertical: 16.h),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12.r),
+                    ),
+                  ),
                 ),
               ),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: state.canDownload
-                    ? Theme.of(context).colorScheme.primary
-                    : Colors.grey,
-                foregroundColor: Colors.white,
-                padding: EdgeInsets.symmetric(vertical: 16.h),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12.r),
-                ),
-              ),
-            ),
+            ],
           ),
         );
       },

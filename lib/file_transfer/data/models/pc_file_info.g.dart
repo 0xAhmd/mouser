@@ -108,10 +108,10 @@ PCDownloadInfo _$PCDownloadInfoFromJson(Map<String, dynamic> json) =>
       path: json['path'] as String,
       name: json['name'] as String?,
       status: json['status'] as String,
-      downloadUrl: json['downloadUrl'] as String?,
+      downloadUrl: json['download_url'] as String?,
       size: (json['size'] as num?)?.toInt(),
-      sizeFormatted: json['sizeFormatted'] as String?,
-      mimeType: json['mimeType'] as String?,
+      sizeFormatted: json['size_formatted'] as String?,
+      mimeType: json['mime_type'] as String?,
       error: json['error'] as String?,
     );
 
@@ -120,10 +120,10 @@ Map<String, dynamic> _$PCDownloadInfoToJson(PCDownloadInfo instance) =>
       'path': instance.path,
       'name': instance.name,
       'status': instance.status,
-      'downloadUrl': instance.downloadUrl,
+      'download_url': instance.downloadUrl,
       'size': instance.size,
-      'sizeFormatted': instance.sizeFormatted,
-      'mimeType': instance.mimeType,
+      'size_formatted': instance.sizeFormatted,
+      'mime_type': instance.mimeType,
       'error': instance.error,
     };
 
@@ -148,15 +148,15 @@ Map<String, dynamic> _$PCDownloadResponseToJson(PCDownloadResponse instance) =>
 
 DownloadSummary _$DownloadSummaryFromJson(Map<String, dynamic> json) =>
     DownloadSummary(
-      totalRequested: (json['totalRequested'] as num?)?.toInt() ?? 0,
-      readyForDownload: (json['readyForDownload'] as num?)?.toInt() ?? 0,
+      totalRequested: (json['total_requested'] as num?)?.toInt() ?? 0,
+      readyForDownload: (json['ready_for_download'] as num?)?.toInt() ?? 0,
       errors: (json['errors'] as num?)?.toInt() ?? 0,
     );
 
 Map<String, dynamic> _$DownloadSummaryToJson(DownloadSummary instance) =>
     <String, dynamic>{
-      'totalRequested': instance.totalRequested,
-      'readyForDownload': instance.readyForDownload,
+      'total_requested': instance.totalRequested,
+      'ready_for_download': instance.readyForDownload,
       'errors': instance.errors,
     };
 
@@ -164,8 +164,8 @@ QuickAccessFolder _$QuickAccessFolderFromJson(Map<String, dynamic> json) =>
     QuickAccessFolder(
       name: json['name'] as String,
       path: json['path'] as String,
-      fileCount: (json['fileCount'] as num?)?.toInt() ?? 0,
-      dirCount: (json['dirCount'] as num?)?.toInt() ?? 0,
+      fileCount: (json['file_count'] as num?)?.toInt() ?? 0,
+      dirCount: (json['dir_count'] as num?)?.toInt() ?? 0,
       accessible: json['accessible'] as bool? ?? false,
     );
 
@@ -173,8 +173,8 @@ Map<String, dynamic> _$QuickAccessFolderToJson(QuickAccessFolder instance) =>
     <String, dynamic>{
       'name': instance.name,
       'path': instance.path,
-      'fileCount': instance.fileCount,
-      'dirCount': instance.dirCount,
+      'file_count': instance.fileCount,
+      'dir_count': instance.dirCount,
       'accessible': instance.accessible,
     };
 
@@ -184,7 +184,7 @@ QuickAccessResponse _$QuickAccessResponseFromJson(Map<String, dynamic> json) =>
       folders: (json['folders'] as List<dynamic>)
           .map((e) => QuickAccessFolder.fromJson(e as Map<String, dynamic>))
           .toList(),
-      homePath: json['homePath'] as String,
+      homePath: json['home_path'] as String,
       error: json['error'] as String?,
     );
 
@@ -193,6 +193,6 @@ Map<String, dynamic> _$QuickAccessResponseToJson(
     <String, dynamic>{
       'status': instance.status,
       'folders': instance.folders,
-      'homePath': instance.homePath,
+      'home_path': instance.homePath,
       'error': instance.error,
     };
