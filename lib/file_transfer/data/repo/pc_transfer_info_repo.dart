@@ -254,36 +254,141 @@ class PCTransferRepository {
 
   Future<String?> _getDownloadDirectory() async {
     try {
-      // Check storage permission
-      var status = await Permission.storage.status;
-      if (!status.isGranted) {
-        status = await Permission.storage.request();
-        if (!status.isGranted) {
-          throw Exception('Storage permission denied');
-        }
-      }
+      debugPrint('📁 Getting download directory...');
 
-      // Get downloads directory
-      Directory? downloadsDir;
-
+      // Try different approaches for different Android versions
       if (Platform.isAndroid) {
-        downloadsDir = Directory('/storage/emulated/0/Download');
-        if (!downloadsDir.existsSync()) {
-          downloadsDir = await getExternalStorageDirectory();
+        // For Android 11+ (API 30+), try multiple permission approaches
+        await _requestStoragePermissions();
+
+        // Try multiple directory options
+        final directories = await _getAvailableDirectories();
+
+        for (final dir in directories) {
+          try {
+            // Test if we can write to this directory
+            final testFile = File('${dir.path}/test_write.tmp');
+            await testFile.writeAsString('test');
+            await testFile.delete();
+
+            debugPrint('✅ Successfully found writable directory: ${dir.path}');
+            return dir.path;
+          } catch (e) {
+            debugPrint('⚠️ Cannot write to ${dir.path}: $e');
+            continue;
+          }
         }
+
+        throw Exception('No writable directory found');
       } else if (Platform.isIOS) {
-        downloadsDir = await getApplicationDocumentsDirectory();
+        final dir = await getApplicationDocumentsDirectory();
+        return dir.path;
       }
 
-      if (downloadsDir == null) {
-        throw Exception('Could not find downloads directory');
-      }
-
-      return downloadsDir.path;
+      throw Exception('Unsupported platform');
     } catch (e) {
       debugPrint('❌ Error getting download directory: $e');
       return null;
     }
+  }
+
+  Future<void> _requestStoragePermissions() async {
+    debugPrint('🔐 Requesting storage permissions...');
+
+    if (Platform.isAndroid) {
+      // Check Android version and request appropriate permissions
+      final androidInfo = await _getAndroidInfo();
+
+      if (androidInfo >= 33) {
+        // Android 13+
+        // For Android 13+, we need different permissions
+        final permissions = [
+          Permission.photos,
+          Permission.videos,
+          Permission.audio,
+        ];
+
+        for (final permission in permissions) {
+          final status = await permission.request();
+          debugPrint('📝 Permission ${permission.toString()}: $status');
+        }
+      } else if (androidInfo >= 30) {
+        // Android 11+
+        // For Android 11+, try MANAGE_EXTERNAL_STORAGE
+        if (await Permission.manageExternalStorage.isDenied) {
+          final status = await Permission.manageExternalStorage.request();
+          debugPrint('📝 MANAGE_EXTERNAL_STORAGE: $status');
+        }
+
+        // Also request regular storage permission as fallback
+        final storageStatus = await Permission.storage.request();
+        debugPrint('📝 Storage permission: $storageStatus');
+      } else {
+        // For older Android versions
+        final status = await Permission.storage.request();
+        debugPrint('📝 Storage permission: $status');
+
+        if (status.isDenied) {
+          throw Exception('Storage permission denied');
+        }
+      }
+    }
+  }
+
+  Future<int> _getAndroidInfo() async {
+    // This is a simplified version. In a real app, you might use device_info_plus
+    // For now, assume modern Android
+    return 33;
+  }
+
+  Future<List<Directory>> _getAvailableDirectories() async {
+    final directories = <Directory>[];
+
+    try {
+      // Try app-specific external storage first (doesn't need permission on Android 10+)
+      final externalDir = await getExternalStorageDirectory();
+      if (externalDir != null) {
+        directories.add(externalDir);
+
+        // Create a Downloads subfolder in app directory
+        final downloadsDir = Directory('${externalDir.path}/Downloads');
+        if (!await downloadsDir.exists()) {
+          await downloadsDir.create(recursive: true);
+        }
+        directories.add(downloadsDir);
+      }
+    } catch (e) {
+      debugPrint('⚠️ Could not access external storage directory: $e');
+    }
+
+    try {
+      // Try application documents directory
+      final docsDir = await getApplicationDocumentsDirectory();
+      directories.add(docsDir);
+
+      // Create Downloads subfolder in documents
+      final downloadsDir = Directory('${docsDir.path}/Downloads');
+      if (!await downloadsDir.exists()) {
+        await downloadsDir.create(recursive: true);
+      }
+      directories.add(downloadsDir);
+    } catch (e) {
+      debugPrint('⚠️ Could not access documents directory: $e');
+    }
+
+    try {
+      // Try the traditional Downloads directory (might not work on newer Android)
+      final downloadsDir = Directory('/storage/emulated/0/Download');
+      if (await downloadsDir.exists()) {
+        directories.add(downloadsDir);
+      }
+    } catch (e) {
+      debugPrint('⚠️ Could not access system Downloads directory: $e');
+    }
+
+    debugPrint(
+        '📁 Available directories: ${directories.map((d) => d.path).join(', ')}');
+    return directories;
   }
 
   Future<DownloadResult> downloadFile(

@@ -43,7 +43,7 @@ class _MouserScreenState extends State<MouserScreen>
       const KeyboardPage(),
       const FileTransferPage(),
       const PCTransferPage(),
-       // Add file transfer page
+      // Add file transfer page
     ]);
 
     // Initialize animation controller for navigation bar
@@ -166,9 +166,9 @@ class _MouserScreenState extends State<MouserScreen>
                                   SizedBox(height: 20.h),
                                   _buildTouchpadCard(theme),
                                   SizedBox(height: 20.h),
-                                  _buildSensitivityCard(theme),
-                                  SizedBox(height: 20.h),
                                   _buildControlButtons(theme),
+                                  SizedBox(height: 20.h),
+                                  _buildSensitivityCard(theme),
                                   SizedBox(height: 20.h),
                                   _buildAdvancedGesturesCard(theme),
                                   SizedBox(height: 80.h),

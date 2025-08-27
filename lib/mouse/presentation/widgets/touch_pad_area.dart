@@ -256,7 +256,7 @@ class _TouchpadAreaState extends State<TouchpadArea> {
                   ),
                   SizedBox(height: 20.h),
                   Text(
-                    'Enhanced Touchpad',
+                    'Touchpad',
                     style: TextStyle(
                       fontSize: 24.sp,
                       fontWeight: FontWeight.bold,
