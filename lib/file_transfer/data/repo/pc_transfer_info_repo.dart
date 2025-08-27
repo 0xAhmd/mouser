@@ -5,11 +5,13 @@ import 'package:mouser/file_transfer/data/models/pc_file_info.dart';
 import 'package:mouser/file_transfer/data/service/pc_transfer_service.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:flutter/services.dart';
 
 class PCTransferRepository {
   final PCTransferService _service;
   final String baseUrl;
   final Dio _downloadDio;
+  static const platform = MethodChannel('com.mouser.file_transfer/media_scanner');
 
   PCTransferRepository({required this.baseUrl})
       : _service = PCTransferService(_createDio(baseUrl)),
@@ -21,7 +23,6 @@ class PCTransferRepository {
       connectTimeout: const Duration(seconds: 30),
       receiveTimeout: const Duration(seconds: 60),
       headers: {'Accept': 'application/json'},
-      // Add validateStatus to handle HTTP errors more gracefully
       validateStatus: (status) {
         return status != null && status < 500;
       },
@@ -37,7 +38,6 @@ class PCTransferRepository {
     dio.interceptors.add(
       InterceptorsWrapper(
         onResponse: (response, handler) {
-          // Sanitize response data to handle null numeric values
           if (response.data is Map<String, dynamic>) {
             response.data = _sanitizeJsonData(response.data);
           }
@@ -45,8 +45,7 @@ class PCTransferRepository {
         },
         onError: (error, handler) {
           debugPrint('❌ PC_TRANSFER ERROR: ${error.type} - ${error.message}');
-          debugPrint(
-              '🔍 ERROR DETAILS: ${error.response?.statusCode} ${error.response?.statusMessage}');
+          debugPrint('🔍 ERROR DETAILS: ${error.response?.statusCode} ${error.response?.statusMessage}');
           debugPrint('🔍 ERROR DATA: ${error.response?.data}');
           handler.next(error);
         },
@@ -60,8 +59,7 @@ class PCTransferRepository {
     final dio = Dio(BaseOptions(
       baseUrl: baseUrl,
       connectTimeout: const Duration(seconds: 30),
-      receiveTimeout:
-          const Duration(minutes: 10), // Longer timeout for downloads
+      receiveTimeout: const Duration(minutes: 10),
     ));
 
     dio.interceptors.add(LogInterceptor(
@@ -79,7 +77,6 @@ class PCTransferRepository {
 
     data.forEach((key, value) {
       if (value == null) {
-        // Set appropriate defaults for known numeric fields
         if (_isNumericField(key)) {
           sanitized[key] = 0;
         } else if (_isBooleanField(key)) {
@@ -89,7 +86,7 @@ class PCTransferRepository {
         } else if (_isListField(key)) {
           sanitized[key] = <dynamic>[];
         } else {
-          sanitized[key] = value; // Keep null for other fields
+          sanitized[key] = value;
         }
       } else if (value is Map<String, dynamic>) {
         sanitized[key] = _sanitizeJsonData(value);
@@ -110,18 +107,9 @@ class PCTransferRepository {
 
   static bool _isNumericField(String key) {
     const numericFields = [
-      'totalFiles',
-      'totalDirectories',
-      'fileCount',
-      'dirCount',
-      'downloadableFiles',
-      'totalSize',
-      'maxFileSizeMb',
-      'totalRequested',
-      'readyForDownload',
-      'errors',
-      'size',
-      'sizeMb'
+      'totalFiles', 'totalDirectories', 'fileCount', 'dirCount', 'downloadableFiles',
+      'totalSize', 'maxFileSizeMb', 'totalRequested', 'readyForDownload',
+      'errors', 'size', 'sizeMb'
     ];
     return numericFields.contains(key);
   }
@@ -133,33 +121,15 @@ class PCTransferRepository {
 
   static bool _isStringField(String key) {
     const stringFields = [
-      'totalSizeFormatted',
-      'sizeFormatted',
-      'name',
-      'path',
-      'type',
-      'extension',
-      'mimeType',
-      'skipReason',
-      'modified',
-      'status',
-      'currentPath',
-      'parentPath',
-      'homePath',
-      'error',
-      'downloadUrl'
+      'totalSizeFormatted', 'sizeFormatted', 'name', 'path', 'type', 'extension',
+      'mimeType', 'skipReason', 'modified', 'status', 'currentPath', 'parentPath',
+      'homePath', 'error', 'downloadUrl'
     ];
     return stringFields.contains(key);
   }
 
   static bool _isListField(String key) {
-    const listFields = [
-      'allowedExtensions',
-      'directories',
-      'files',
-      'folders',
-      'downloads'
-    ];
+    const listFields = ['allowedExtensions', 'directories', 'files', 'folders', 'downloads'];
     return listFields.contains(key);
   }
 
@@ -167,12 +137,10 @@ class PCTransferRepository {
     try {
       debugPrint('🔍 Browsing path: ${path ?? 'default'}');
       final response = await _service.browsePath(path);
-      debugPrint(
-          '✅ Found ${response.files.length} files, ${response.directories.length} directories');
+      debugPrint('✅ Found ${response.files.length} files, ${response.directories.length} directories');
       return response;
     } catch (e) {
       debugPrint('❌ Error browsing path: $e');
-      // Return a safe empty response on error
       return const PCBrowseResponse(
         status: 'error',
         directories: [],
@@ -193,7 +161,6 @@ class PCTransferRepository {
       return response;
     } catch (e) {
       debugPrint('❌ Error getting file info: $e');
-      // Return a safe empty response on error
       return const PCFileInfoResponse(
         status: 'error',
         files: [],
@@ -215,12 +182,10 @@ class PCTransferRepository {
       debugPrint('🚀 Preparing download for ${filePaths.length} files');
       final request = {'paths': filePaths};
       final response = await _service.prepareDownload(request);
-      debugPrint(
-          '✅ ${response.summary.readyForDownload} files ready for download');
+      debugPrint('✅ ${response.summary.readyForDownload} files ready for download');
       return response;
     } catch (e) {
       debugPrint('❌ Error preparing download: $e');
-      // Return a safe empty response on error
       return const PCDownloadResponse(
         status: 'error',
         downloads: [],
@@ -242,7 +207,6 @@ class PCTransferRepository {
       return response;
     } catch (e) {
       debugPrint('❌ Error getting quick access folders: $e');
-      // Return a safe empty response on error
       return const QuickAccessResponse(
         status: 'error',
         folders: [],
@@ -254,141 +218,156 @@ class PCTransferRepository {
 
   Future<String?> _getDownloadDirectory() async {
     try {
-      debugPrint('📁 Getting download directory...');
+      debugPrint('📁 Getting public download directory...');
 
-      // Try different approaches for different Android versions
       if (Platform.isAndroid) {
-        // For Android 11+ (API 30+), try multiple permission approaches
-        await _requestStoragePermissions();
-
-        // Try multiple directory options
-        final directories = await _getAvailableDirectories();
-
-        for (final dir in directories) {
-          try {
-            // Test if we can write to this directory
-            final testFile = File('${dir.path}/test_write.tmp');
-            await testFile.writeAsString('test');
-            await testFile.delete();
-
-            debugPrint('✅ Successfully found writable directory: ${dir.path}');
-            return dir.path;
-          } catch (e) {
-            debugPrint('⚠️ Cannot write to ${dir.path}: $e');
-            continue;
-          }
+        // Request appropriate permissions
+        final hasPermissions = await _requestStoragePermissions();
+        if (!hasPermissions) {
+          debugPrint('❌ Storage permissions denied');
+          throw Exception('Storage permissions denied');
         }
 
-        throw Exception('No writable directory found');
+        // Try to get public Downloads directory
+        final publicDownloadsDir = await _getPublicDownloadsDirectory();
+        if (publicDownloadsDir != null) {
+          return publicDownloadsDir.path;
+        }
+
+        // Fallback to app-specific external directory
+        final externalDir = await getExternalStorageDirectory();
+        if (externalDir != null) {
+          final downloadsDir = Directory('${externalDir.path}/Downloads');
+          if (!await downloadsDir.exists()) {
+            await downloadsDir.create(recursive: true);
+          }
+          debugPrint('📁 Using app-specific downloads directory: ${downloadsDir.path}');
+          return downloadsDir.path;
+        }
       } else if (Platform.isIOS) {
         final dir = await getApplicationDocumentsDirectory();
         return dir.path;
       }
 
-      throw Exception('Unsupported platform');
+      throw Exception('Could not get download directory');
     } catch (e) {
       debugPrint('❌ Error getting download directory: $e');
       return null;
     }
   }
 
-  Future<void> _requestStoragePermissions() async {
-    debugPrint('🔐 Requesting storage permissions...');
-
-    if (Platform.isAndroid) {
-      // Check Android version and request appropriate permissions
-      final androidInfo = await _getAndroidInfo();
-
-      if (androidInfo >= 33) {
-        // Android 13+
-        // For Android 13+, we need different permissions
-        final permissions = [
-          Permission.photos,
-          Permission.videos,
-          Permission.audio,
-        ];
-
-        for (final permission in permissions) {
-          final status = await permission.request();
-          debugPrint('📝 Permission ${permission.toString()}: $status');
-        }
-      } else if (androidInfo >= 30) {
-        // Android 11+
-        // For Android 11+, try MANAGE_EXTERNAL_STORAGE
-        if (await Permission.manageExternalStorage.isDenied) {
-          final status = await Permission.manageExternalStorage.request();
-          debugPrint('📝 MANAGE_EXTERNAL_STORAGE: $status');
-        }
-
-        // Also request regular storage permission as fallback
-        final storageStatus = await Permission.storage.request();
-        debugPrint('📝 Storage permission: $storageStatus');
-      } else {
-        // For older Android versions
-        final status = await Permission.storage.request();
-        debugPrint('📝 Storage permission: $status');
-
-        if (status.isDenied) {
-          throw Exception('Storage permission denied');
+  Future<Directory?> _getPublicDownloadsDirectory() async {
+    try {
+      // For Android 10+ (API 29+), try to use the public Downloads directory
+      const downloadsPath = '/storage/emulated/0/Download';
+      final downloadsDir = Directory(downloadsPath);
+      
+      if (await downloadsDir.exists()) {
+        // Test write permissions
+        try {
+          final testFile = File('${downloadsDir.path}/test_write_${DateTime.now().millisecondsSinceEpoch}.tmp');
+          await testFile.writeAsString('test');
+          await testFile.delete();
+          debugPrint('✅ Can write to public Downloads directory');
+          return downloadsDir;
+        } catch (e) {
+          debugPrint('⚠️ Cannot write to public Downloads directory: $e');
         }
       }
+
+      // Alternative paths to try
+      final alternativePaths = [
+        '/storage/emulated/0/Downloads',
+        '/sdcard/Download',
+        '/sdcard/Downloads',
+      ];
+
+      for (final path in alternativePaths) {
+        try {
+          final dir = Directory(path);
+          if (await dir.exists()) {
+            // Test write permissions
+            final testFile = File('${dir.path}/test_write_${DateTime.now().millisecondsSinceEpoch}.tmp');
+            await testFile.writeAsString('test');
+            await testFile.delete();
+            debugPrint('✅ Using alternative Downloads directory: $path');
+            return dir;
+          }
+        } catch (e) {
+          debugPrint('⚠️ Cannot use directory $path: $e');
+          continue;
+        }
+      }
+
+      return null;
+    } catch (e) {
+      debugPrint('❌ Error getting public Downloads directory: $e');
+      return null;
     }
   }
 
-  Future<int> _getAndroidInfo() async {
-    // This is a simplified version. In a real app, you might use device_info_plus
-    // For now, assume modern Android
+  Future<bool> _requestStoragePermissions() async {
+    try {
+      debugPrint('🔐 Requesting storage permissions...');
+
+      if (Platform.isAndroid) {
+        // For Android 13+ (API 33+)
+        if (await _getAndroidVersion() >= 33) {
+          // Request photo/media permissions for Android 13+
+          final permissions = [Permission.photos, Permission.videos, Permission.audio];
+          bool allGranted = true;
+          
+          for (final permission in permissions) {
+            final status = await permission.request();
+            debugPrint('📝 Permission ${permission.toString()}: $status');
+            if (!status.isGranted) allGranted = false;
+          }
+          
+          return allGranted;
+        } else {
+          // For Android 10-12 (API 29-32)
+          final storageStatus = await Permission.storage.request();
+          debugPrint('📝 Storage permission: $storageStatus');
+          
+          if (storageStatus.isGranted) {
+            return true;
+          }
+          
+          // Try MANAGE_EXTERNAL_STORAGE for Android 11+
+          if (await _getAndroidVersion() >= 30) {
+            final manageStorageStatus = await Permission.manageExternalStorage.request();
+            debugPrint('📝 MANAGE_EXTERNAL_STORAGE permission: $manageStorageStatus');
+            return manageStorageStatus.isGranted;
+          }
+          
+          return storageStatus.isGranted;
+        }
+      }
+
+      return true; // iOS doesn't need explicit permissions for app directories
+    } catch (e) {
+      debugPrint('❌ Error requesting permissions: $e');
+      return false;
+    }
+  }
+
+  Future<int> _getAndroidVersion() async {
+    // Simplified version - in a real app you might use device_info_plus
+    // For now, assume a modern Android version
     return 33;
   }
 
-  Future<List<Directory>> _getAvailableDirectories() async {
-    final directories = <Directory>[];
-
+  Future<void> _scanFile(String filePath) async {
     try {
-      // Try app-specific external storage first (doesn't need permission on Android 10+)
-      final externalDir = await getExternalStorageDirectory();
-      if (externalDir != null) {
-        directories.add(externalDir);
-
-        // Create a Downloads subfolder in app directory
-        final downloadsDir = Directory('${externalDir.path}/Downloads');
-        if (!await downloadsDir.exists()) {
-          await downloadsDir.create(recursive: true);
-        }
-        directories.add(downloadsDir);
+      if (Platform.isAndroid) {
+        // Try to trigger media scanner to make the file visible in gallery/file manager
+        await platform.invokeMethod('scanFile', {'filePath': filePath});
+        debugPrint('📱 Media scanner triggered for: $filePath');
       }
     } catch (e) {
-      debugPrint('⚠️ Could not access external storage directory: $e');
+      debugPrint('⚠️ Could not trigger media scanner: $e');
+      // This is not critical, file will still be accessible
     }
-
-    try {
-      // Try application documents directory
-      final docsDir = await getApplicationDocumentsDirectory();
-      directories.add(docsDir);
-
-      // Create Downloads subfolder in documents
-      final downloadsDir = Directory('${docsDir.path}/Downloads');
-      if (!await downloadsDir.exists()) {
-        await downloadsDir.create(recursive: true);
-      }
-      directories.add(downloadsDir);
-    } catch (e) {
-      debugPrint('⚠️ Could not access documents directory: $e');
-    }
-
-    try {
-      // Try the traditional Downloads directory (might not work on newer Android)
-      final downloadsDir = Directory('/storage/emulated/0/Download');
-      if (await downloadsDir.exists()) {
-        directories.add(downloadsDir);
-      }
-    } catch (e) {
-      debugPrint('⚠️ Could not access system Downloads directory: $e');
-    }
-
-    debugPrint(
-        '📁 Available directories: ${directories.map((d) => d.path).join(', ')}');
-    return directories;
   }
 
   Future<DownloadResult> downloadFile(
@@ -433,11 +412,16 @@ class PCTransferRepository {
       if (response.statusCode == 200) {
         final file = File(finalFilePath);
         if (file.existsSync()) {
-          debugPrint('✅ Download completed: ${file.lengthSync()} bytes');
+          final fileSize = file.lengthSync();
+          debugPrint('✅ Download completed: $fileSize bytes');
+          
+          // Trigger media scanner to make file visible in gallery/file manager
+          await _scanFile(finalFilePath);
+          
           return DownloadResult.success(
             filePath: finalFilePath,
             fileName: finalFilePath.split('/').last,
-            fileSize: file.lengthSync(),
+            fileSize: fileSize,
           );
         }
       }
