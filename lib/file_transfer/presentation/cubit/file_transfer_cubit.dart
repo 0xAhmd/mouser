@@ -362,8 +362,9 @@ class FileTransferCubit extends Cubit<FileTransferState> {
     if (_repository == null) return 'Repository not initialized';
     if (state.selectedFiles.isEmpty) return 'No files selected';
     if (state.selectedDirectory == null) return 'No directory selected';
-    if (state.status == FileTransferStatus.uploading)
+    if (state.status == FileTransferStatus.uploading) {
       return 'Upload in progress';
+    }
     return 'Unknown reason';
   }
 
@@ -447,19 +448,43 @@ class FileTransferCubit extends Cubit<FileTransferState> {
   }
 
   Future<void> debugConnection() async {
-    print('=== DEBUG CONNECTION ===');
-    print('Base URL: ${_repository?.baseUrl}');
-    print('Connection State: ${state.isConnected}');
+    debugPrint('=== DEBUG CONNECTION ===');
+    debugPrint('Base URL: ${_repository?.baseUrl}');
+    debugPrint('Connection State: ${state.isConnected}');
 
     try {
       final response = await http.get(
         Uri.parse(
             '${_connectionCubit.state.serverIP}:${_connectionCubit.state.serverPort}/file-transfer/status'),
       );
-      print('Direct HTTP Status: ${response.statusCode}');
-      print('Direct HTTP Body: ${response.body}');
+      debugPrint('Direct HTTP Status: ${response.statusCode}');
+      debugPrint('Direct HTTP Body: ${response.body}');
     } catch (e) {
-      print('Direct HTTP Error: $e');
+      debugPrint('Direct HTTP Error: $e');
+    }
+  }
+
+  Future<void> debugReleaseMode() async {
+    debugPrint('=== RELEASE MODE DEBUG ===');
+    debugPrint('Connection State: ${state.isConnected}');
+    debugPrint('Repository: ${_repository != null ? 'Initialized' : 'Null'}');
+    debugPrint(
+        'Base URL: ${_connectionCubit.state.serverIP}:${_connectionCubit.state.serverPort}');
+    debugPrint('Available Directories: ${state.availableDirectories.length}');
+    debugPrint('Selected Directory: ${state.selectedDirectory?.name ?? 'None'}');
+    debugPrint('Transfer Status: ${state.transferStatus?.status ?? 'None'}');
+
+    // Test direct connection
+    try {
+      final response = await http.get(
+        Uri.parse(
+            'http://${_connectionCubit.state.serverIP}:${_connectionCubit.state.serverPort}/file-transfer/status'),
+        headers: {'Accept': 'application/json'},
+      );
+      debugPrint('Direct HTTP Response: ${response.statusCode}');
+      debugPrint('Direct HTTP Body: ${response.body}');
+    } catch (e) {
+      debugPrint('Direct HTTP Error: $e');
     }
   }
 }

@@ -103,7 +103,7 @@ class FileTransferRepository {
           case 503:
             return 'Server temporarily unavailable. Try again later.';
           default:
-            return 'Server error (${statusCode}). ${error.response?.data?.toString() ?? ''}';
+            return 'Server error ($statusCode). ${error.response?.data?.toString() ?? ''}';
         }
       case DioExceptionType.connectionError:
         return 'Cannot connect to server. Check network connection and server IP/port.';

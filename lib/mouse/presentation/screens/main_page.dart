@@ -254,7 +254,6 @@ class _MouserScreenState extends State<MouserScreen>
   Widget _buildNavItem({
     IconData? icon,
     String? image,
-     String? label,
     required int index,
     required ThemeData theme,
   }) {

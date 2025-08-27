@@ -141,6 +141,7 @@ class _FileTransferPageState extends State<FileTransferPage> {
                 _buildUploadSection(),
                 SizedBox(height: 16.h),
                 _buildUploadProgress(),
+               
               ],
             ),
           ),
