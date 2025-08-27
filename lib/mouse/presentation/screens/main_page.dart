@@ -4,6 +4,7 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:mouser/file_transfer/presentation/pages/pc_to_phone_transfer_page.dart';
 import 'package:mouser/keyboard/presentation/pages/keyboard_page.dart';
 import 'package:mouser/file_transfer/presentation/pages/file_transfer_page.dart';
 import 'package:mouser/mouse/presentation/widgets/control_button.dart';
@@ -40,7 +41,9 @@ class _MouserScreenState extends State<MouserScreen>
     _pages.addAll([
       _buildMousePage(),
       const KeyboardPage(),
-      const FileTransferPage(), // Add file transfer page
+      const FileTransferPage(),
+      const PCTransferPage(),
+       // Add file transfer page
     ]);
 
     // Initialize animation controller for navigation bar
@@ -242,6 +245,11 @@ class _MouserScreenState extends State<MouserScreen>
               _buildNavItem(
                 image: "assets/file.png",
                 index: 2,
+                theme: theme,
+              ),
+              _buildNavItem(
+                image: "assets/file_to_pc.png",
+                index: 3,
                 theme: theme,
               ),
             ],
