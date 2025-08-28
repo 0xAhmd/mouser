@@ -112,6 +112,9 @@ class KeyboardCubit extends Cubit<KeyboardState> {
         case 'escape':
           await _repository?.sendEscape();
           break;
+        case 'print_screen':
+          await _repository?.sendPrintScreen();
+          break;
         default:
           if (action.contains('arrow')) {
             await _repository?.sendArrowKey(action.replaceAll('_arrow', ''));

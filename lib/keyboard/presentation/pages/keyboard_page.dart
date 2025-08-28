@@ -312,6 +312,14 @@ class _KeyboardPageState extends State<KeyboardPage> {
                             .sendSpecialKey('escape')
                         : null,
                   ),
+                  VirtualKey(
+                    label: 'PRTSC',
+                    onPressed: connectionState.isConnected
+                        ? () => context
+                            .read<KeyboardCubit>()
+                            .sendSpecialKey('print_screen')
+                        : null,
+                  ),
                 ],
               ),
               SizedBox(height: 12.h),

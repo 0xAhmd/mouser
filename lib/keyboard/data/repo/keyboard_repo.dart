@@ -86,6 +86,10 @@ class KeyboardRepository {
     return sendKey('Escape');
   }
 
+  Future<KeyboardResponse> sendPrintScreen() async {
+    return sendKey('PrintScreen');
+  }
+
   Future<KeyboardResponse> sendArrowKey(String direction) async {
     // Send arrow keys in the format the server expects
     return sendKey('${direction.toLowerCase()}_arrow');
@@ -98,11 +102,11 @@ class KeyboardRepository {
         action: 'key_combination',
         data: KeyboardData(text: keys.join('+')), // For logging purposes
       );
-      
+
       // Override the toJson to include keys array
       final requestJson = request.toJson();
       requestJson['data'] = {'keys': keys};
-      
+
       debugPrint('Sending key combination: $requestJson');
       return await _service.sendKeyboardCommand(request);
     } catch (e) {
