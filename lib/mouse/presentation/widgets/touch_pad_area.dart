@@ -114,6 +114,7 @@ class _TouchpadAreaState extends State<TouchpadArea> {
           localPosition: details.localFocalPoint,
           globalPosition: details.focalPoint,
         ));
+        _lastPanPosition = details.localFocalPoint;
       }
       _lastPanPosition = details.localFocalPoint;
     } else if (_pointerCount == 2 && _isScrolling) {
@@ -124,11 +125,11 @@ class _TouchpadAreaState extends State<TouchpadArea> {
         // Convert vertical movement to scroll with threshold to avoid jittery scrolling
         if (deltaY.abs() > 3.0) {
           // Laptop-style scrolling: negative deltaY = scroll up, positive = scroll down
-          final scrollAmount = -deltaY / 15.0; // Adjust divisor for scroll sensitivity
+          final scrollAmount =
+              -deltaY / 15.0; // Adjust divisor for scroll sensitivity
           widget.onScroll(scrollAmount);
         }
       }
-      _lastPanPosition = details.localFocalPoint;
     }
   }
 
@@ -233,78 +234,80 @@ class _TouchpadAreaState extends State<TouchpadArea> {
           child: Stack(
             children: [
               // Main touchpad content
-              Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Container(
-                    padding: EdgeInsets.all(20.w),
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.primary.withOpacity(
-                        _pointerCount > 0 ? 0.2 : 0.1,
+              Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Container(
+                      padding: EdgeInsets.all(20.w),
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.primary.withOpacity(
+                          _pointerCount > 0 ? 0.2 : 0.1,
+                        ),
+                        shape: BoxShape.circle,
                       ),
-                      shape: BoxShape.circle,
+                      child: Icon(
+                        _isTextSelecting
+                            ? Icons.text_fields
+                            : _pointerCount >= 2
+                                ? Icons.swipe_vertical
+                                : Icons.touch_app,
+                        size: 48.sp,
+                        color: theme.colorScheme.primary,
+                      ),
                     ),
-                    child: Icon(
-                      _isTextSelecting
-                          ? Icons.text_fields
-                          : _pointerCount >= 2
-                              ? Icons.swipe_vertical
-                              : Icons.touch_app,
-                      size: 48.sp,
-                      color: theme.colorScheme.primary,
-                    ),
-                  ),
-                  SizedBox(height: 20.h),
-                  Text(
-                    'Touchpad',
-                    style: TextStyle(
-                      fontSize: 24.sp,
-                      fontWeight: FontWeight.bold,
-                      color: theme.colorScheme.primary,
-                    ),
-                  ),
-                  SizedBox(height: 8.h),
-                  Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 20.w),
-                    child: Text(
-                      _getGestureHint(),
+                    SizedBox(height: 20.h),
+                    Text(
+                      'Touchpad',
                       style: TextStyle(
-                        fontSize: 12.sp,
-                        color: theme.colorScheme.onSurface.withOpacity(0.6),
+                        fontSize: 24.sp,
+                        fontWeight: FontWeight.bold,
+                        color: theme.colorScheme.primary,
                       ),
-                      textAlign: TextAlign.center,
-                      maxLines: 2,
                     ),
-                  ),
+                    SizedBox(height: 8.h),
+                    Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 20.w),
+                      child: Text(
+                        _getGestureHint(),
+                        style: TextStyle(
+                          fontSize: 12.sp,
+                          color: theme.colorScheme.onSurface.withOpacity(0.6),
+                        ),
+                        textAlign: TextAlign.center,
+                        maxLines: 2,
+                      ),
+                    ),
 
-                  // Gesture indicators
-                  SizedBox(height: 16.h),
-                  Wrap(
-                    spacing: 8.w,
-                    runSpacing: 4.h,
-                    alignment: WrapAlignment.center,
-                    children: [
-                      _buildGestureChip(
-                        '1 finger',
-                        'Move & Click',
-                        _pointerCount == 1,
-                        theme,
-                      ),
-                      _buildGestureChip(
-                        '2 fingers',
-                        'Scroll Only',
-                        _pointerCount == 2,
-                        theme,
-                      ),
-                      _buildGestureChip(
-                        'Long press',
-                        'Text Select',
-                        _isTextSelecting,
-                        theme,
-                      ),
-                    ],
-                  ),
-                ],
+                    // Gesture indicators
+                    SizedBox(height: 16.h),
+                    Wrap(
+                      spacing: 8.w,
+                      runSpacing: 4.h,
+                      alignment: WrapAlignment.center,
+                      children: [
+                        _buildGestureChip(
+                          '1 finger',
+                          'Move & Click',
+                          _pointerCount == 1,
+                          theme,
+                        ),
+                        _buildGestureChip(
+                          '2 fingers',
+                          'Scroll Only',
+                          _pointerCount == 2,
+                          theme,
+                        ),
+                        _buildGestureChip(
+                          'Long press',
+                          'Text Select',
+                          _isTextSelecting,
+                          theme,
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
 
               // Visual feedback for touch points
