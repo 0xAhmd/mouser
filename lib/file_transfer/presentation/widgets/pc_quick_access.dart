@@ -64,9 +64,9 @@ class PCQuickAccess extends StatelessWidget {
     }
 
     return Container(
-      height: 100.h,
-      margin: EdgeInsets.symmetric(horizontal: 16.w),
+      margin: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Padding(
@@ -80,9 +80,11 @@ class PCQuickAccess extends StatelessWidget {
               ),
             ),
           ),
-          Expanded(
+          SizedBox(
+            height: 92.h, // Fixed height that accommodates content
             child: ListView.builder(
               scrollDirection: Axis.horizontal,
+              padding: EdgeInsets.symmetric(horizontal: 4.w),
               itemCount: accessibleFolders.length,
               itemBuilder: (context, index) {
                 final folder = accessibleFolders[index];
@@ -100,15 +102,15 @@ class PCQuickAccess extends StatelessWidget {
     final folderColor = _getFolderColor(folder.name);
 
     return Container(
-      width: 80.w,
-      margin: EdgeInsets.only(right: 12.w),
+      width: 90.w, // Slightly reduced width to prevent overflow
+      margin: EdgeInsets.only(right: 8.w), // Reduced margin
       child: Material(
         color: Colors.transparent,
         child: InkWell(
           onTap: () => onFolderTap(folder),
           borderRadius: BorderRadius.circular(12.r),
           child: Container(
-            padding: EdgeInsets.all(8.w),
+            padding: EdgeInsets.all(6.w), // Reduced padding
             decoration: BoxDecoration(
               color: theme.colorScheme.surface.withOpacity(0.7),
               borderRadius: BorderRadius.circular(12.r),
@@ -117,41 +119,54 @@ class PCQuickAccess extends StatelessWidget {
               ),
             ),
             child: Column(
+              mainAxisSize: MainAxisSize.min,
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
+                // Icon container
                 Container(
-                  width: 36.sp,
-                  height: 36.sp,
+                  width: 32.sp, // Slightly smaller
+                  height: 32.sp,
                   decoration: BoxDecoration(
                     color: folderColor.withOpacity(0.2),
                     borderRadius: BorderRadius.circular(8.r),
                   ),
                   child: Icon(
                     _getFolderIcon(folder.name),
-                    size: 20.sp,
+                    size: 18.sp, // Slightly smaller
                     color: folderColor,
                   ),
                 ),
-                SizedBox(height: 8.h),
-                Text(
-                  folder.name,
-                  style: TextStyle(
-                    fontSize: 11.sp,
-                    fontWeight: FontWeight.w500,
-                  ),
-                  textAlign: TextAlign.center,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                if (folder.fileCount > 0 || folder.dirCount > 0) ...[
-                  SizedBox(height: 2.h),
-                  Text(
-                    '${folder.fileCount + folder.dirCount} items',
+
+                SizedBox(height: 6.h), // Reduced spacing
+
+                // Folder name - with proper text overflow handling
+                Flexible(
+                  child: Text(
+                    folder.name,
                     style: TextStyle(
-                      fontSize: 9.sp,
-                      color: theme.colorScheme.onSurface.withOpacity(0.6),
+                      fontSize: 10.sp, // Slightly smaller
+                      fontWeight: FontWeight.w500,
                     ),
                     textAlign: TextAlign.center,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+
+                // Item count - only show if there are items and space allows
+                if (folder.fileCount > 0 || folder.dirCount > 0) ...[
+                  SizedBox(height: 2.h),
+                  Flexible(
+                    child: Text(
+                      '${folder.fileCount + folder.dirCount} items',
+                      style: TextStyle(
+                        fontSize: 8.sp, // Smaller font
+                        color: theme.colorScheme.onSurface.withOpacity(0.6),
+                      ),
+                      textAlign: TextAlign.center,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
                   ),
                 ],
               ],

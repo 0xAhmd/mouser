@@ -59,31 +59,34 @@ class _PCTransferPageState extends State<PCTransferPage> {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Debug Information'),
-        content: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text('Selected Files: ${state.selectedFiles.length}'),
-              Text('Can Download: ${state.canDownload}'),
-              Text('Status: ${state.status}'),
-              const SizedBox(height: 16),
-              const Text('Selected Files Details:',
-                  style: TextStyle(fontWeight: FontWeight.bold)),
-              ...state.selectedFiles.map((file) => Padding(
-                    padding: const EdgeInsets.only(left: 8, top: 4),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text('• ${file.name}'),
-                        Text('  Downloadable: ${file.downloadable}'),
-                        Text('  Can Download: ${file.canDownload}'),
-                        if (file.skipReason != null)
-                          Text('  Skip Reason: ${file.skipReason}'),
-                      ],
-                    ),
-                  ))
-            ],
+        content: SizedBox(
+          width: double.maxFinite,
+          child: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text('Selected Files: ${state.selectedFiles.length}'),
+                Text('Can Download: ${state.canDownload}'),
+                Text('Status: ${state.status}'),
+                const SizedBox(height: 16),
+                const Text('Selected Files Details:',
+                    style: TextStyle(fontWeight: FontWeight.bold)),
+                ...state.selectedFiles.map((file) => Padding(
+                      padding: const EdgeInsets.only(left: 8, top: 4),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('• ${file.name}'),
+                          Text('  Downloadable: ${file.downloadable}'),
+                          Text('  Can Download: ${file.canDownload}'),
+                          if (file.skipReason != null)
+                            Text('  Skip Reason: ${file.skipReason}'),
+                        ],
+                      ),
+                    ))
+              ],
+            ),
           ),
         ),
         actions: [
@@ -136,32 +139,35 @@ class _PCTransferPageState extends State<PCTransferPage> {
         },
         child: Column(
           children: [
-            // Fixed header section with intrinsic height
-            SizedBox(
-              width: double.infinity,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // Header and connection status
-                  Padding(
-                    padding: EdgeInsets.fromLTRB(16.w, 0, 16.w, 8.h),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        _buildConnectionStatus(),
-                        SizedBox(height: 12.h),
-                        _buildSelectionInfo(),
-                      ],
-                    ),
-                  ),
+            // Connection status - Fixed at top
+            Padding(
+              padding: EdgeInsets.fromLTRB(16.w, 0, 16.w, 8.h),
+              child: _buildConnectionStatus(),
+            ),
 
-                  // Download progress (when downloading) - Fixed positioning
-                  BlocBuilder<PCTransferCubit, PCTransferState>(
-                    builder: (context, state) {
+            // Main scrollable content
+            Expanded(
+              child: BlocBuilder<PCTransferCubit, PCTransferState>(
+                builder: (context, state) {
+                  if (!context.watch<ConnectionCubit>().state.isConnected) {
+                    return _buildNotConnectedView();
+                  }
+
+                  return CustomScrollView(
+                    slivers: [
+                      // Selection info (when files are selected)
+                      if (state.selectedFiles.isNotEmpty)
+                        SliverToBoxAdapter(
+                          child: Padding(
+                            padding: EdgeInsets.fromLTRB(16.w, 0, 16.w, 8.h),
+                            child: _buildSelectionInfo(),
+                          ),
+                        ),
+
+                      // Download progress (when downloading/completed)
                       if (state.status == PCTransferStatus.downloading ||
-                          state.downloadResults.isNotEmpty) {
-                        return Padding(
-                          padding: EdgeInsets.symmetric(horizontal: 16.w),
+                          state.downloadResults.isNotEmpty)
+                        SliverToBoxAdapter(
                           child: PCDownloadProgress(
                             progress: state.downloadProgress,
                             isDownloading:
@@ -171,29 +177,11 @@ class _PCTransferPageState extends State<PCTransferPage> {
                             totalFiles: state.totalDownloads,
                             downloadResults: state.downloadResults,
                           ),
-                        );
-                      }
-                      return const SizedBox.shrink();
-                    },
-                  ),
-                ],
-              ),
-            ),
+                        ),
 
-            // Flexible main content area
-            Expanded(
-              child: BlocBuilder<PCTransferCubit, PCTransferState>(
-                builder: (context, state) {
-                  if (!context.watch<ConnectionCubit>().state.isConnected) {
-                    return _buildNotConnectedView();
-                  }
-
-                  return Column(
-                    children: [
-                      // Quick access folders - Constrained height
+                      // Quick access folders
                       if (state.quickAccessFolders.isNotEmpty)
-                        Container(
-                          constraints: BoxConstraints(maxHeight: 80.h),
+                        SliverToBoxAdapter(
                           child: PCQuickAccess(
                             folders: state.quickAccessFolders,
                             onFolderTap: (folder) {
@@ -204,8 +192,8 @@ class _PCTransferPageState extends State<PCTransferPage> {
                           ),
                         ),
 
-                      // File browser - Takes remaining space
-                      Expanded(
+                      // File browser
+                      SliverFillRemaining(
                         child: PCFileBrowser(
                           currentPath: state.currentPath,
                           parentPath: state.parentPath,
@@ -245,7 +233,7 @@ class _PCTransferPageState extends State<PCTransferPage> {
               ),
             ),
 
-            // Fixed bottom button - Always visible
+            // Fixed bottom button
             SafeArea(
               top: false,
               child: _buildDownloadButton(),
@@ -260,7 +248,7 @@ class _PCTransferPageState extends State<PCTransferPage> {
     return BlocBuilder<ConnectionCubit, ConnectionState>(
       builder: (context, connectionState) {
         return GlassCard(
-          child: Container(
+          child: Padding(
             padding: EdgeInsets.all(12.w),
             child: Row(
               children: [
@@ -330,7 +318,7 @@ class _PCTransferPageState extends State<PCTransferPage> {
             downloadableCount < state.selectedFiles.length;
 
         return GlassCard(
-          child: Container(
+          child: Padding(
             padding: EdgeInsets.all(12.w),
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -350,7 +338,7 @@ class _PCTransferPageState extends State<PCTransferPage> {
                           fontSize: 12.sp,
                           fontWeight: FontWeight.w500,
                         ),
-                        maxLines: 1,
+                        maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
@@ -359,9 +347,10 @@ class _PCTransferPageState extends State<PCTransferPage> {
 
                 // Show warning if some files can't be downloaded
                 if (hasNonDownloadable) ...[
-                  SizedBox(height: 6.h),
+                  SizedBox(height: 8.h),
                   Container(
-                    padding: EdgeInsets.all(6.w),
+                    width: double.infinity,
+                    padding: EdgeInsets.all(8.w),
                     decoration: BoxDecoration(
                       color: Colors.orange.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(6.r),
@@ -372,17 +361,17 @@ class _PCTransferPageState extends State<PCTransferPage> {
                         Icon(
                           Icons.warning_amber,
                           color: Colors.orange,
-                          size: 12.sp,
+                          size: 14.sp,
                         ),
-                        SizedBox(width: 6.w),
+                        SizedBox(width: 8.w),
                         Expanded(
                           child: Text(
                             '${state.selectedFiles.length - downloadableCount} files cannot be downloaded',
                             style: TextStyle(
-                              fontSize: 10.sp,
+                              fontSize: 11.sp,
                               color: Colors.orange[800],
                             ),
-                            maxLines: 1,
+                            maxLines: 2,
                             overflow: TextOverflow.ellipsis,
                           ),
                         ),
@@ -441,7 +430,7 @@ class _PCTransferPageState extends State<PCTransferPage> {
                 foregroundColor: Colors.white,
                 padding: EdgeInsets.symmetric(
                   horizontal: 20.w,
-                  vertical: 10.h,
+                  vertical: 12.h,
                 ),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10.r),
@@ -466,39 +455,39 @@ class _PCTransferPageState extends State<PCTransferPage> {
 
         return Container(
           width: double.infinity,
-          padding: EdgeInsets.fromLTRB(16.w, 8.h, 16.w, 12.h),
+          padding: EdgeInsets.all(16.w),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              // Debug info (only in debug mode) - Constrained
+              // Debug info (only in debug mode)
               if (kDebugMode && state.selectedFiles.isNotEmpty) ...[
                 Container(
-                  constraints: BoxConstraints(maxHeight: 30.h),
-                  padding: EdgeInsets.all(6.w),
+                  width: double.infinity,
+                  padding: EdgeInsets.all(8.w),
                   decoration: BoxDecoration(
                     color: Colors.blue.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(6.r),
                   ),
                   child: Row(
                     children: [
-                      Icon(Icons.info, color: Colors.blue, size: 12.sp),
-                      SizedBox(width: 6.w),
+                      Icon(Icons.info, color: Colors.blue, size: 14.sp),
+                      SizedBox(width: 8.w),
                       Expanded(
                         child: Text(
                           'Debug: ${state.selectedFiles.length} selected, $downloadableCount downloadable, canDownload: ${state.canDownload}',
                           style: TextStyle(
-                              fontSize: 9.sp, color: Colors.blue[800]),
-                          maxLines: 1,
+                              fontSize: 10.sp, color: Colors.blue[800]),
+                          maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
                     ],
                   ),
                 ),
-                SizedBox(height: 6.h),
+                SizedBox(height: 12.h),
               ],
 
-              // Download button - Fixed height
+              // Download button
               SizedBox(
                 width: double.infinity,
                 height: 48.h,
@@ -520,21 +509,24 @@ class _PCTransferPageState extends State<PCTransferPage> {
                                 AlwaysStoppedAnimation<Color>(Colors.white),
                           ),
                         )
-                      : Icon(Icons.download, size: 16.sp),
-                  label: Text(
-                    state.status == PCTransferStatus.downloading
-                        ? 'Downloading...'
-                        : state.selectedFiles.isEmpty
-                            ? 'Select Files to Download'
-                            : downloadableCount == 0
-                                ? 'No Files Available for Download'
-                                : 'Download $downloadableCount File${downloadableCount == 1 ? '' : 's'}',
-                    style: TextStyle(
-                      fontSize: 14.sp,
-                      fontWeight: FontWeight.w600,
+                      : Icon(Icons.download, size: 18.sp),
+                  label: Flexible(
+                    child: Text(
+                      state.status == PCTransferStatus.downloading
+                          ? 'Downloading...'
+                          : state.selectedFiles.isEmpty
+                              ? 'Select Files to Download'
+                              : downloadableCount == 0
+                                  ? 'No Files Available for Download'
+                                  : 'Download $downloadableCount File${downloadableCount == 1 ? '' : 's'}',
+                      style: TextStyle(
+                        fontSize: 14.sp,
+                        fontWeight: FontWeight.w600,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      textAlign: TextAlign.center,
                     ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
                   ),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: state.canDownload
@@ -542,7 +534,7 @@ class _PCTransferPageState extends State<PCTransferPage> {
                         : Colors.grey,
                     foregroundColor: Colors.white,
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10.r),
+                      borderRadius: BorderRadius.circular(12.r),
                     ),
                   ),
                 ),

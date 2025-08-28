@@ -33,7 +33,6 @@ class PCFileBrowser extends StatelessWidget {
     required this.onRefresh,
   });
 
-
   IconData _getFileIcon(String? extension) {
     if (extension == null) return Icons.insert_drive_file;
 
@@ -136,6 +135,7 @@ class PCFileBrowser extends StatelessWidget {
     return Column(
       children: [
         // Path and controls
+        SizedBox(height: 4.h),
         Padding(
           padding: EdgeInsets.symmetric(horizontal: 16.w),
           child: GlassCard(
@@ -218,7 +218,7 @@ class PCFileBrowser extends StatelessWidget {
           ),
         ),
 
-        SizedBox(height: 8.h),
+        SizedBox(height: 12.h),
 
         // File list
         Expanded(
