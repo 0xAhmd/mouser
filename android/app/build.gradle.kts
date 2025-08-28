@@ -5,7 +5,7 @@ plugins {
 }
 
 android {
-    namespace = "com.example.mouser"
+    namespace = "com.mouser.app"  // Changed to match MainActivity.kt
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
@@ -19,7 +19,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.example.mouser"
+        applicationId = "com.mouser.app"  // Changed to match MainActivity.kt
         minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
