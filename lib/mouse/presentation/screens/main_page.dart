@@ -7,6 +7,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:mouser/file_transfer/presentation/pages/pc_to_phone_transfer_page.dart';
 import 'package:mouser/keyboard/presentation/pages/keyboard_page.dart';
 import 'package:mouser/file_transfer/presentation/pages/file_transfer_page.dart';
+import 'package:mouser/mouse/presentation/screens/qr_screen_page.dart';
 import 'package:mouser/mouse/presentation/widgets/control_button.dart';
 import 'package:mouser/mouse/presentation/widgets/touch_pad_area.dart';
 import 'package:mouser/mouse/presentation/widgets/animated_button.dart';
@@ -44,7 +45,7 @@ class _MouserScreenState extends State<MouserScreen>
       const KeyboardPage(),
       const FileTransferPage(),
       const PCTransferPage(),
-      // Add file transfer page
+      const QRScannerScreen()
     ]);
 
     // Initialize animation controller for navigation bar
@@ -253,6 +254,11 @@ class _MouserScreenState extends State<MouserScreen>
                 index: 3,
                 theme: theme,
               ),
+              _buildNavItem(
+                icon: Icons.qr_code,
+                index: 4,
+                theme: theme,
+              ),
             ],
           ),
         ),
@@ -320,67 +326,67 @@ class _MouserScreenState extends State<MouserScreen>
     return const SizedBox();
   }
 
-Widget _buildConnectionStatus() {
-  return BlocBuilder<ConnectionCubit, ConnectionState>(
-    builder: (context, connectionState) {
-      return GlassCard(
-        child: Row(
-          children: [
-            Icon(
-              connectionState.isConnected ? Icons.wifi : Icons.wifi_off,
-              color: connectionState.isConnected ? Colors.green : Colors.red,
-              size: 24.sp,
-            ),
-            SizedBox(width: 12.w),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    connectionState.isConnected
-                        ? 'Connected'
-                        : 'Not Connected',
-                    style: TextStyle(
-                      fontSize: 16.sp,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  if (connectionState.isConnected)
-                    Text(
-                      connectionState.serverIP,
-                      style: TextStyle(
-                        fontSize: 12.sp,
-                        color: Theme.of(context)
-                            .colorScheme
-                            .onSurface
-                            .withOpacity(0.6),
-                      ),
-                    ),
-                ],
-              ),
-            ),
-            // Settings button
-            IconButton(
-              onPressed: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (context) => const SettingsPage(),
-                  ),
-                );
-              },
-              icon: Icon(
-                Icons.settings,
-                color: Theme.of(context).colorScheme.primary,
+  Widget _buildConnectionStatus() {
+    return BlocBuilder<ConnectionCubit, ConnectionState>(
+      builder: (context, connectionState) {
+        return GlassCard(
+          child: Row(
+            children: [
+              Icon(
+                connectionState.isConnected ? Icons.wifi : Icons.wifi_off,
+                color: connectionState.isConnected ? Colors.green : Colors.red,
                 size: 24.sp,
               ),
-              tooltip: 'Settings',
-            ),
-          ],
-        ),
-      );
-    },
-  );
-}
+              SizedBox(width: 12.w),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      connectionState.isConnected
+                          ? 'Connected'
+                          : 'Not Connected',
+                      style: TextStyle(
+                        fontSize: 16.sp,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    if (connectionState.isConnected)
+                      Text(
+                        connectionState.serverIP,
+                        style: TextStyle(
+                          fontSize: 12.sp,
+                          color: Theme.of(context)
+                              .colorScheme
+                              .onSurface
+                              .withOpacity(0.6),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+              // Settings button
+              IconButton(
+                onPressed: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (context) => const SettingsPage(),
+                    ),
+                  );
+                },
+                icon: Icon(
+                  Icons.settings,
+                  color: Theme.of(context).colorScheme.primary,
+                  size: 24.sp,
+                ),
+                tooltip: 'Settings',
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
 
   Widget _buildConnectionCard(ThemeData theme) {
     return BlocBuilder<ConnectionCubit, ConnectionState>(

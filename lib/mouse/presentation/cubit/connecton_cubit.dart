@@ -49,6 +49,29 @@ class ConnectionCubit extends Cubit<ConnectionState> {
     }
   }
 
+  /// Connect using QR code data
+  Future<void> connectFromQRCode(String ip, int port) async {
+    if (state.isConnecting) return;
+
+    emit(state.copyWith(isConnecting: true, errorMessage: null));
+
+    try {
+      // Update connection settings
+      await updateServerIP(ip);
+      await updateServerPort(port);
+
+      // Test the connection
+      await testConnection();
+    } catch (e) {
+      emit(state.copyWith(
+        isConnected: false,
+        isConnecting: false,
+        errorMessage: 'QR connection failed: $e',
+      ));
+      rethrow;
+    }
+  }
+
   /// Test connection with current settings
   Future<void> testConnection() async {
     if (state.isConnecting) return;
@@ -84,6 +107,7 @@ class ConnectionCubit extends Cubit<ConnectionState> {
         isConnecting: false,
         errorMessage: 'Connection failed: $e',
       ));
+      rethrow; // Re-throw to handle in QR scanner
     }
   }
 
