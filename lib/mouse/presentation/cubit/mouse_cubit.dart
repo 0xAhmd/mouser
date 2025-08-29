@@ -1,6 +1,7 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
+import 'package:mouser/core/cache_manager.dart';
 import 'package:mouser/mouse/presentation/cubit/connecton_cubit.dart';
 import 'dart:convert';
 import 'mouse_state.dart';
@@ -8,15 +9,101 @@ import 'mouse_state.dart';
 class MouseCubit extends Cubit<MouseState> {
   final ConnectionCubit connectionCubit;
 
-  MouseCubit({required this.connectionCubit}) : super(const MouseState());
+  MouseCubit({required this.connectionCubit}) : super(const MouseState()) {
+    _loadSavedPreferences();
+  }
 
-  void updateSensitivity(double sensitivity) {
+  /// Load saved sensitivity preferences on initialization
+  Future<void> _loadSavedPreferences() async {
+    try {
+      final mouseSensitivity = await UserPreferences.getMouseSensitivity();
+      final scrollSensitivity = await UserPreferences.getScrollSensitivity();
+      
+      emit(state.copyWith(
+        sensitivity: mouseSensitivity,
+        scrollSensitivity: scrollSensitivity,
+      ));
+    } catch (e) {
+      debugPrint('Error loading mouse preferences: $e');
+    }
+  }
+
+  /// Update mouse sensitivity and save to preferences
+  Future<void> updateSensitivity(double sensitivity) async {
     emit(state.copyWith(sensitivity: sensitivity));
+    
+    // Save to preferences
+    try {
+      await UserPreferences.setMouseSensitivity(sensitivity);
+    } catch (e) {
+      debugPrint('Error saving mouse sensitivity: $e');
+    }
   }
 
-  void updateScrollSensitivity(double scrollSensitivity) {
+  /// Update scroll sensitivity and save to preferences
+  Future<void> updateScrollSensitivity(double scrollSensitivity) async {
     emit(state.copyWith(scrollSensitivity: scrollSensitivity));
+    
+    // Save to preferences
+    try {
+      await UserPreferences.setScrollSensitivity(scrollSensitivity);
+    } catch (e) {
+      debugPrint('Error saving scroll sensitivity: $e');
+    }
   }
+
+  /// Set gesture sensitivity preset and save to preferences
+  Future<void> setGestureSensitivity(String preset) async {
+    double mouseSens;
+    double scrollSens;
+    
+    switch (preset) {
+      case 'low':
+        mouseSens = 1.0;
+        scrollSens = 0.5;
+        break;
+      case 'medium':
+        mouseSens = 2.5;
+        scrollSens = 1.0;
+        break;
+      case 'high':
+        mouseSens = 4.5;
+        scrollSens = 1.8;
+        break;
+      default:
+        return; // Unknown preset
+    }
+    
+    emit(state.copyWith(
+      sensitivity: mouseSens,
+      scrollSensitivity: scrollSens,
+    ));
+    
+    // Save both settings to preferences
+    try {
+      await UserPreferences.saveSensitivitySettings(
+        mouseSensitivity: mouseSens,
+        scrollSensitivity: scrollSens,
+      );
+    } catch (e) {
+      debugPrint('Error saving sensitivity preset: $e');
+    }
+  }
+
+  /// Reset sensitivity settings to defaults
+  Future<void> resetSensitivityToDefaults() async {
+    await UserPreferences.clearSensitivitySettings();
+    
+    const defaultMouseSensitivity = 2.5;
+    const defaultScrollSensitivity = 1.0;
+    
+    emit(state.copyWith(
+      sensitivity: defaultMouseSensitivity,
+      scrollSensitivity: defaultScrollSensitivity,
+    ));
+  }
+
+  // ... (keep all existing methods below this point)
 
   Future<void> sendMouseCommand(
     String action, {
@@ -53,7 +140,6 @@ class MouseCubit extends Cubit<MouseState> {
       debugPrint('Error sending command: $e');
       if (e.toString().contains('SocketException') ||
           e.toString().contains('ClientException')) {
-        // Update connection status
         connectionCubit.disconnect();
       }
       emit(state.copyWith(
@@ -62,7 +148,6 @@ class MouseCubit extends Cubit<MouseState> {
     }
   }
 
-  // Enhanced keyboard commands for advanced gestures
   Future<void> sendKeyboardCommand(
     String action, {
     Map<String, dynamic>? data,
@@ -100,36 +185,6 @@ class MouseCubit extends Cubit<MouseState> {
         errorMessage: 'Keyboard command failed: $e',
       ));
     }
-  }
-
-  void sendMoveCommand(double dx, double dy) {
-    sendMouseCommand(
-      'move',
-      data: {
-        'dx': dx * state.sensitivity,
-        'dy': dy * state.sensitivity,
-      },
-    );
-  }
-
-  void sendClickCommand(String clickType) {
-    sendMouseCommand(clickType);
-  }
-
-  void sendScrollCommand(String direction) {
-    sendMouseCommand(direction);
-  }
-
-  // Enhanced two-finger scroll method
-  void sendTwoFingerScroll(double deltaY) {
-    // Convert deltaY to scroll commands with enhanced sensitivity
-    final scrollAmount = deltaY * state.scrollSensitivity;
-
-    // Use the new gesture endpoint for better handling
-    sendGestureCommand('two_finger_scroll', data: {
-      'deltaY': scrollAmount,
-      'sensitivity': state.scrollSensitivity,
-    });
   }
 
   Future<void> sendGestureCommand(
@@ -171,6 +226,33 @@ class MouseCubit extends Cubit<MouseState> {
     }
   }
 
+  void sendMoveCommand(double dx, double dy) {
+    sendMouseCommand(
+      'move',
+      data: {
+        'dx': dx * state.sensitivity,
+        'dy': dy * state.sensitivity,
+      },
+    );
+  }
+
+  void sendClickCommand(String clickType) {
+    sendMouseCommand(clickType);
+  }
+
+  void sendScrollCommand(String direction) {
+    sendMouseCommand(direction);
+  }
+
+  void sendTwoFingerScroll(double deltaY) {
+    final scrollAmount = deltaY * state.scrollSensitivity;
+
+    sendGestureCommand('two_finger_scroll', data: {
+      'deltaY': scrollAmount,
+      'sensitivity': state.scrollSensitivity,
+    });
+  }
+
   void sendRightClick() {
     sendMouseCommand('right_click');
   }
@@ -180,7 +262,6 @@ class MouseCubit extends Cubit<MouseState> {
   }
 
   void startTextSelection({int fingerCount = 1}) {
-    // Only start text selection for single finger
     if (fingerCount == 1) {
       sendMouseCommand('drag_start', data: {
         'selection_mode': true,
@@ -194,18 +275,16 @@ class MouseCubit extends Cubit<MouseState> {
   }
 
   void endTextSelection() {
-    // End drag selection
     sendMouseCommand('drag_end');
     emit(state.copyWith(isTextSelecting: false));
   }
 
   void sendTextSelectionMove(double dx, double dy, {int fingerCount = 1}) {
-    // Only send text selection moves for single finger
     if (fingerCount == 1) {
       sendMouseCommand(
         'move',
         data: {
-          'dx': dx * state.sensitivity * 0.3, // Slower movement for precision
+          'dx': dx * state.sensitivity * 0.3,
           'dy': dy * state.sensitivity * 0.3,
           'finger_count': fingerCount,
         },
@@ -213,7 +292,6 @@ class MouseCubit extends Cubit<MouseState> {
     }
   }
 
-  // Additional keyboard shortcuts for advanced text selection
   void selectAll() {
     sendKeyboardCommand('key_combination', data: {
       'keys': ['ctrl', 'a']
@@ -250,7 +328,6 @@ class MouseCubit extends Cubit<MouseState> {
     });
   }
 
-  // Basic zoom presets (kept for manual zoom buttons)
   void zoomIn() {
     sendKeyboardCommand('key_combination', data: {
       'keys': ['ctrl', '+']
@@ -269,51 +346,19 @@ class MouseCubit extends Cubit<MouseState> {
     });
   }
 
-  // Three-finger gestures (if supported in future)
   void showDesktop() {
     sendKeyboardCommand('key_combination', data: {
       'keys': ['cmd', 'd']
-    }); // Mac
-    // For Windows: Win+D
-    // sendKeyboardCommand('key_combination', {'keys': ['win', 'd']});
+    });
   }
 
   void showApplicationSwitcher() {
     sendKeyboardCommand('key_combination', data: {
       'keys': ['cmd', 'tab']
-    }); // Mac
-    // For Windows: Alt+Tab
-    // sendKeyboardCommand('key_combination', {'keys': ['alt', 'tab']});
+    });
   }
 
   void clearError() {
     emit(state.copyWith(errorMessage: null));
-  }
-
-  // Gesture sensitivity presets (removed zoom sensitivity)
-  void setGestureSensitivity(String preset) {
-    switch (preset) {
-      case 'low':
-        emit(state.copyWith(
-          sensitivity: 1.0,
-          scrollSensitivity: 0.5,
-        ));
-        break;
-      case 'medium':
-        emit(state.copyWith(
-          sensitivity: 2.5,
-          scrollSensitivity: 1.0,
-        ));
-        break;
-      case 'high':
-        emit(state.copyWith(
-          sensitivity: 4.5,
-          scrollSensitivity: 1.8,
-        ));
-        break;
-      default:
-        // Custom sensitivity values
-        break;
-    }
   }
 }

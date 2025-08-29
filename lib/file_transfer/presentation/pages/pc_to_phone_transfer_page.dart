@@ -11,6 +11,7 @@ import 'package:mouser/file_transfer/presentation/widgets/pc_quick_access.dart';
 import 'package:mouser/mouse/presentation/cubit/connecton_cubit.dart';
 import 'package:mouser/mouse/presentation/cubit/connecton_state.dart';
 import 'package:mouser/mouse/presentation/widgets/glass_card.dart';
+import 'package:mouser/settings/settings_page.dart';
 
 class PCTransferPage extends StatefulWidget {
   const PCTransferPage({super.key});
@@ -244,66 +245,67 @@ class _PCTransferPageState extends State<PCTransferPage> {
     );
   }
 
-  Widget _buildConnectionStatus() {
-    return BlocBuilder<ConnectionCubit, ConnectionState>(
-      builder: (context, connectionState) {
-        return GlassCard(
-          child: Padding(
-            padding: EdgeInsets.all(12.w),
-            child: Row(
-              children: [
-                Icon(
-                  connectionState.isConnected ? Icons.wifi : Icons.wifi_off,
-                  color:
-                      connectionState.isConnected ? Colors.green : Colors.red,
-                  size: 20.sp,
-                ),
-                SizedBox(width: 12.w),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        connectionState.isConnected
-                            ? 'Connected to PC'
-                            : 'Not Connected',
-                        style: TextStyle(
-                          fontSize: 14.sp,
-                          fontWeight: FontWeight.w600,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      if (connectionState.isConnected)
-                        Text(
-                          connectionState.serverIP,
-                          style: TextStyle(
-                            fontSize: 11.sp,
-                            color: Theme.of(context)
-                                .colorScheme
-                                .onSurface
-                                .withOpacity(0.6),
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                    ],
-                  ),
-                ),
-                if (connectionState.isConnected)
-                  Icon(
-                    Icons.download,
-                    color: Theme.of(context).colorScheme.primary,
-                    size: 18.sp,
-                  ),
-              ],
+Widget _buildConnectionStatus() {
+  return BlocBuilder<ConnectionCubit, ConnectionState>(
+    builder: (context, connectionState) {
+      return GlassCard(
+        child: Row(
+          children: [
+            Icon(
+              connectionState.isConnected ? Icons.wifi : Icons.wifi_off,
+              color: connectionState.isConnected ? Colors.green : Colors.red,
+              size: 24.sp,
             ),
-          ),
-        );
-      },
-    );
-  }
+            SizedBox(width: 12.w),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    connectionState.isConnected
+                        ? 'Connected'
+                        : 'Not Connected',
+                    style: TextStyle(
+                      fontSize: 16.sp,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  if (connectionState.isConnected)
+                    Text(
+                      connectionState.serverIP,
+                      style: TextStyle(
+                        fontSize: 12.sp,
+                        color: Theme.of(context)
+                            .colorScheme
+                            .onSurface
+                            .withOpacity(0.6),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+            // Settings button
+            IconButton(
+              onPressed: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) => const SettingsPage(),
+                  ),
+                );
+              },
+              icon: Icon(
+                Icons.settings,
+                color: Theme.of(context).colorScheme.primary,
+                size: 24.sp,
+              ),
+              tooltip: 'Settings',
+            ),
+          ],
+        ),
+      );
+    },
+  );
+}
 
   Widget _buildSelectionInfo() {
     return BlocBuilder<PCTransferCubit, PCTransferState>(
@@ -417,25 +419,6 @@ class _PCTransferPageState extends State<PCTransferPage> {
                 color: Colors.grey,
               ),
               textAlign: TextAlign.center,
-            ),
-            SizedBox(height: 20.h),
-            ElevatedButton.icon(
-              onPressed: () {
-                //TODO Navigate to connection page or show connection dialog
-              },
-              icon: Icon(Icons.settings, size: 16.sp),
-              label: const Text('Connection Settings'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Theme.of(context).colorScheme.primary,
-                foregroundColor: Colors.white,
-                padding: EdgeInsets.symmetric(
-                  horizontal: 20.w,
-                  vertical: 12.h,
-                ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10.r),
-                ),
-              ),
             ),
           ],
         ),

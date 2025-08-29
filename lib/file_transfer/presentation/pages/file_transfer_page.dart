@@ -12,6 +12,7 @@ import 'package:mouser/file_transfer/presentation/widgets/upload_progress_widget
 import 'package:mouser/mouse/presentation/cubit/connecton_cubit.dart';
 import 'package:mouser/mouse/presentation/cubit/connecton_state.dart';
 import 'package:mouser/mouse/presentation/widgets/glass_card.dart';
+import 'package:mouser/settings/settings_page.dart';
 
 class FileTransferPage extends StatefulWidget {
   const FileTransferPage({super.key});
@@ -149,53 +150,67 @@ class _FileTransferPageState extends State<FileTransferPage> {
       ),
     );
   }
-
-  Widget _buildConnectionStatus() {
-    return BlocBuilder<ConnectionCubit, ConnectionState>(
-      builder: (context, connectionState) {
-        return GlassCard(
-          child: Row(
-            children: [
-              Icon(
-                connectionState.isConnected ? Icons.wifi : Icons.wifi_off,
-                color: connectionState.isConnected ? Colors.green : Colors.red,
-                size: 24.sp,
-              ),
-              SizedBox(width: 12.w),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
+Widget _buildConnectionStatus() {
+  return BlocBuilder<ConnectionCubit, ConnectionState>(
+    builder: (context, connectionState) {
+      return GlassCard(
+        child: Row(
+          children: [
+            Icon(
+              connectionState.isConnected ? Icons.wifi : Icons.wifi_off,
+              color: connectionState.isConnected ? Colors.green : Colors.red,
+              size: 24.sp,
+            ),
+            SizedBox(width: 12.w),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    connectionState.isConnected
+                        ? 'Connected'
+                        : 'Not Connected',
+                    style: TextStyle(
+                      fontSize: 16.sp,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  if (connectionState.isConnected)
                     Text(
-                      connectionState.isConnected
-                          ? 'Connected'
-                          : 'Not Connected',
+                      connectionState.serverIP,
                       style: TextStyle(
-                        fontSize: 16.sp,
-                        fontWeight: FontWeight.w600,
+                        fontSize: 12.sp,
+                        color: Theme.of(context)
+                            .colorScheme
+                            .onSurface
+                            .withOpacity(0.6),
                       ),
                     ),
-                    if (connectionState.isConnected)
-                      Text(
-                        connectionState.serverIP,
-                        style: TextStyle(
-                          fontSize: 12.sp,
-                          color: Theme.of(context)
-                              .colorScheme
-                              .onSurface
-                              .withOpacity(0.6),
-                        ),
-                      ),
-                  ],
-                ),
+                ],
               ),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
+            ),
+            // Settings button
+            IconButton(
+              onPressed: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) => const SettingsPage(),
+                  ),
+                );
+              },
+              icon: Icon(
+                Icons.settings,
+                color: Theme.of(context).colorScheme.primary,
+                size: 24.sp,
+              ),
+              tooltip: 'Settings',
+            ),
+          ],
+        ),
+      );
+    },
+  );
+}
   Widget _buildDirectorySelection() {
     return BlocBuilder<FileTransferCubit, FileTransferState>(
       builder: (context, state) {

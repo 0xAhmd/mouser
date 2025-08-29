@@ -16,6 +16,7 @@ import 'package:mouser/mouse/presentation/cubit/connecton_cubit.dart';
 import 'package:mouser/mouse/presentation/cubit/connecton_state.dart';
 import 'package:mouser/mouse/presentation/cubit/mouse_cubit.dart';
 import 'package:mouser/mouse/presentation/cubit/mouse_state.dart';
+import 'package:mouser/settings/settings_page.dart';
 
 class MouserScreen extends StatefulWidget {
   const MouserScreen({super.key});
@@ -319,51 +320,67 @@ class _MouserScreenState extends State<MouserScreen>
     return const SizedBox();
   }
 
-  Widget _buildConnectionStatus() {
-    return BlocBuilder<ConnectionCubit, ConnectionState>(
-      builder: (context, connectionState) {
-        return GlassCard(
-          child: Row(
-            children: [
-              Icon(
-                connectionState.isConnected ? Icons.wifi : Icons.wifi_off,
-                color: connectionState.isConnected ? Colors.green : Colors.red,
-                size: 24.sp,
-              ),
-              SizedBox(width: 12.w),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
+Widget _buildConnectionStatus() {
+  return BlocBuilder<ConnectionCubit, ConnectionState>(
+    builder: (context, connectionState) {
+      return GlassCard(
+        child: Row(
+          children: [
+            Icon(
+              connectionState.isConnected ? Icons.wifi : Icons.wifi_off,
+              color: connectionState.isConnected ? Colors.green : Colors.red,
+              size: 24.sp,
+            ),
+            SizedBox(width: 12.w),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    connectionState.isConnected
+                        ? 'Connected'
+                        : 'Not Connected',
+                    style: TextStyle(
+                      fontSize: 16.sp,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  if (connectionState.isConnected)
                     Text(
-                      connectionState.isConnected
-                          ? 'Connected'
-                          : 'Not Connected',
+                      connectionState.serverIP,
                       style: TextStyle(
-                        fontSize: 16.sp,
-                        fontWeight: FontWeight.w600,
+                        fontSize: 12.sp,
+                        color: Theme.of(context)
+                            .colorScheme
+                            .onSurface
+                            .withOpacity(0.6),
                       ),
                     ),
-                    if (connectionState.isConnected)
-                      Text(
-                        connectionState.serverIP,
-                        style: TextStyle(
-                          fontSize: 12.sp,
-                          color: Theme.of(context)
-                              .colorScheme
-                              .onSurface
-                              .withOpacity(0.6),
-                        ),
-                      ),
-                  ],
-                ),
+                ],
               ),
-            ],
-          ),
-        );
-      },
-    );
-  }
+            ),
+            // Settings button
+            IconButton(
+              onPressed: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) => const SettingsPage(),
+                  ),
+                );
+              },
+              icon: Icon(
+                Icons.settings,
+                color: Theme.of(context).colorScheme.primary,
+                size: 24.sp,
+              ),
+              tooltip: 'Settings',
+            ),
+          ],
+        ),
+      );
+    },
+  );
+}
 
   Widget _buildConnectionCard(ThemeData theme) {
     return BlocBuilder<ConnectionCubit, ConnectionState>(

@@ -2,13 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:mouser/app_launcher.dart';
+import 'package:mouser/core/cache_manager.dart';
 import 'package:mouser/file_transfer/presentation/cubit/pc_transfer_cubit.dart';
 import 'package:mouser/keyboard/presentation/cubit/keyboard_cubit.dart';
 import 'package:mouser/mouse/presentation/cubit/connecton_cubit.dart';
 import 'package:mouser/mouse/presentation/cubit/mouse_cubit.dart';
 import 'package:mouser/file_transfer/presentation/cubit/file_transfer_cubit.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await UserPreferences.init();
+
   runApp(const Mouser());
 }
 
