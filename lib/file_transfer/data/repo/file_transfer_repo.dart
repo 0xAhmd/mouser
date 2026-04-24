@@ -81,6 +81,8 @@ class FileTransferRepository {
     return dio;
   }
 
+  static const int maxUploadSize = 1024 * 1024 * 1024; // 1GB
+
   static String _createUserFriendlyError(DioException error) {
     switch (error.type) {
       case DioExceptionType.connectionTimeout:
@@ -97,7 +99,7 @@ class FileTransferRepository {
           case 403:
             return 'Access forbidden. Check server permissions.';
           case 413:
-            return 'File too large. Reduce file size or check server limits.';
+            return 'File too large. Maximum upload size is 1GB.';
           case 500:
             return 'Server error. Check server logs for details.';
           case 503:
@@ -108,11 +110,9 @@ class FileTransferRepository {
       case DioExceptionType.connectionError:
         return 'Cannot connect to server. Check network connection and server IP/port.';
       case DioExceptionType.badCertificate:
-        return 'SSL certificate error. Check server certificate.';
-      case DioExceptionType.cancel:
-        return 'Request was cancelled.';
+        return 'Invalid server certificate. Check server security settings.';
       default:
-        return 'Network error: ${error.message}';
+        return 'An unknown error occurred. Please try again.';
     }
   }
 

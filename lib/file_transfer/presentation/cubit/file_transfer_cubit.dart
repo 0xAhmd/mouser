@@ -272,7 +272,7 @@ class FileTransferCubit extends Cubit<FileTransferState> {
         final validation = await _repository!.validateFiles(
           state.selectedFiles,
           state.transferStatus!.allowedExtensions,
-          100 * 1024 * 1024, // 100MB max
+          1024 * 1024 * 1024, // 1GB max
         );
 
         final validFiles = validation['validFiles'] as List<File>;

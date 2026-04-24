@@ -21,7 +21,7 @@ android {
     defaultConfig {
         applicationId = "com.mouser.app"  // Changed to match MainActivity.kt
         minSdk = flutter.minSdkVersion
-        targetSdk = flutter.targetSdkVersion
+        targetSdk = 34
         versionCode = flutter.versionCode
         versionName = flutter.versionName
     }
